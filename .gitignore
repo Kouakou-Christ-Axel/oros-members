@@ -33,6 +33,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# donnees membres (photos, imports/exports) - jamais commiter de vraies donnees d'eglise
+/uploads/
+/exports/
+/public/uploads/
+
 # vercel
 .vercel
 
