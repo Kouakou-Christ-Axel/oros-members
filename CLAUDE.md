@@ -51,16 +51,19 @@ app/
   api/
     export/[type]/route.ts      # GET — export Excel/PDF/CSV (fichier binaire, pas un Server Action)
     import/route.ts              # POST — upload + parsing Excel
-proxy.ts                        # anciennement "middleware.ts" — voir Conventions
+proxy.ts                        # anciennement "middleware.ts" — check cookie optimiste, voir Conventions
 lib/
-  db.ts                         # client Prisma
+  db.ts                         # client Prisma (singleton + PrismaPg adapter)
   auth/
-    session.ts                  # encrypt/decrypt + createSession/updateSession/deleteSession (jose)
-    dal.ts                      # verifySession() — Data Access Layer, cache() React
+    auth.ts                     # instance serveur Better Auth (prismaAdapter, admin plugin)
+    client.ts                   # createAuthClient — hooks côté client (formulaire de connexion...)
+    dal.ts                      # getSession()/requireSession()/requireRole() — cache() React, la vraie barrière
+    permissions.ts              # access control : rôles pasteur/assistante
   actions/                      # Server Actions par domaine : membres.ts, serviteurs.ts, departements.ts, import-export.ts
   validations/                  # schémas zod par domaine
 prisma/
-  schema.prisma
+  schema.prisma                 # + modèles Better Auth (User/Session/Account/Verification, générés)
+generated/prisma/                # client Prisma généré — gitignored, jamais éditer à la main
 ```
 
 Une Server Action par mutation, colocalisée dans `lib/actions/<domaine>.ts` (`'use server'` en haut de fichier). Chaque action revérifie `verifySession()` + le rôle — jamais de confiance dans l'UI seule (une action est un endpoint public déguisé, cf. doc Next.js `authentication.md`).
@@ -81,16 +84,15 @@ Une Server Action par mutation, colocalisée dans `lib/actions/<domaine>.ts` (`'
 - **`proxy.ts` remplace `middleware.ts`** depuis Next.js 16 (même fonctionnalité, nouveau nom/fichier). Ne pas créer `middleware.ts`.
 - **Cache Components désactivé** (`cacheComponents` absent de `next.config.ts`) — décision délibérée : cette appli est un dashboard interne authentifié où quasi tout est dynamique par utilisateur (aucune page publique/partagée à mettre en cache). Ne pas l'activer sans une vraie page candidate au cache statique — sinon c'est de la complexité (`use cache`, `<Suspense>` partout) sans bénéfice.
 - Mutations via **Server Actions** (`'use server'`), pas de `fetch` vers sa propre API interne. Exception : `@tanstack/react-query` peut orchestrer une Server Action côté client (`useMutation({ mutationFn: monServerAction })`) quand on a besoin de retry/polling/état de chargement fin — ce n'est pas un appel réseau vers une API, juste un wrapper client autour de la même Server Action.
-- Auth : DAL (`lib/auth/dal.ts`) avec `verifySession()` mémoïsé par `React.cache`, appelé en haut de chaque page/layout protégé et dans chaque Server Action sensible.
-- Session cookie : `httpOnly`, `secure`, `sameSite: 'lax'`. Durée courte (~30 min) et **rafraîchie à chaque requête authentifiée** dans `proxy.ts` (sliding expiration) — c'est ce qui réalise la "déconnexion automatique après inactivité" du §18, pas un cookie longue durée.
+- Auth : **Better Auth** (voir §Authentification ci-dessous). DAL (`lib/auth/dal.ts`) avec `getSession()`/`requireSession()`/`requireRole()` mémoïsés par `React.cache`, appelés en haut de chaque page/layout protégé et dans chaque Server Action sensible. `proxy.ts` ne fait qu'une vérification optimiste du cookie (`getSessionCookie`, pas de requête DB) — la session n'est **réellement** validée que dans la DAL.
+- Session : `expiresIn: 30 min`, `updateAge: 5 min` (glissant) dans la config Better Auth — c'est ce qui réalise la "déconnexion automatique après inactivité" du §18, pas un cookie longue durée.
 
 ## Packages (à installer seulement quand la fonctionnalité correspondante démarre — pas d'un coup)
 
 | Besoin | Choix | Pourquoi |
 |---|---|---|
-| ORM / BDD | `prisma` + `@prisma/client`, PostgreSQL | Recommandé par le cahier des charges, migrations versionnées |
-| Session | `jose` | Signature/vérification JWT du cookie de session, léger, recommandé par la doc Next.js auth |
-| Mot de passe | `bcryptjs` | Hash, pur JS (pas de build natif à gérer sous Windows) |
+| ORM / BDD | `prisma` + `@prisma/client` **v7 (pas la v8 RC)** + `@prisma/adapter-pg` + `pg`, PostgreSQL | Recommandé par le cahier des charges. Prisma 7 impose un driver adapter (`prisma.config.ts`, generator `provider = "prisma-client"` avec `output` explicite) — voir §Authentification pour le détail |
+| Authentification | `better-auth` + `@better-auth/prisma-adapter` | Décision explicite de l'utilisateur (remplace le couple jose/bcryptjs prévu initialement). Voir §Authentification |
 | Validation | `zod` | Schémas de formulaire, recommandé par la doc Next.js |
 | Import Excel (.xlsx **et** .xls) | SheetJS, installé **depuis leur CDN** (`https://cdn.sheetjs.com`), pas `xlsx` sur npm | Le paquet `xlsx` publié sur npm est figé à une vieille version (0.18.5) avec des CVE connues — SheetJS distribue les versions à jour hors npm depuis leur propre registre. Vérifier l'URL de tarball actuelle sur sheetjs.com au moment de l'installer. `exceljs` ne lit pas le `.xls` legacy (BIFF), donc à écarter si le `.xls` doit vraiment être supporté |
 | Fiche individuelle imprimable | Aucun paquet — feuille de style d'impression (`@media print`) + `window.print()` | C'est ce que fait le design (`PrintSheet`) ; le navigateur sait déjà générer un PDF depuis une page imprimable ("Enregistrer en PDF" dans la boîte d'impression), pas besoin de générer le PDF côté serveur pour ça |
@@ -123,10 +125,23 @@ Deux projets Claude Design, lus via l'outil `DesignSync` (méthodes `list_files`
 - **Exception au pattern `Form`/`FormField` de shadcn** : le design n'utilise pas react-hook-form — il compose `Field`/`FieldGrid` + primitives natives (`Input`, `NativeSelect`...) directement, ce qui confirme le choix déjà pris dans ce fichier (voir tableau Packages).
 - Ordre de portage recommandé (voir aussi Sub-agents) : tokens CSS → primitives `components/ui/` → composants métier `components/oros/` → écrans. Ne pas lancer plusieurs agents `dev-frontend` en parallèle sur des écrans tant que la couche composants n'existe pas, sous peine que chacun réinvente sa propre variante de `StatusBadge`.
 
+## Authentification (Better Auth)
+
+- **Postgres local en Docker** : `docker-compose.yml` à la racine, service `postgres` sur le **port hôte 5433** (pas 5432 — déjà pris sur cette machine) mappé vers 5432 dans le conteneur. `docker compose up -d` pour démarrer. Le volume `oros_postgres_data` persiste les données entre redémarrages.
+- `.env` (gitignored) contient `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` — `.env.example` (commité) documente les clés attendues sans valeurs réelles. Régénérer un secret : `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+- **2 comptes fixes, pas d'inscription publique** : `emailAndPassword.disableSignUp: true` dans `lib/auth/auth.ts` — la route `/api/auth/sign-up/email` répond 400 même si on l'appelle directement. Les comptes sont créés une fois avec la CLI Better Auth, jamais via un formulaire d'inscription :
+  ```bash
+  npx auth create-admin --config lib/auth/auth.ts --email pasteur@oros.local --password '<mdp>' --name Pasteur --role pasteur
+  npx auth create-admin --config lib/auth/auth.ts --email assistante@oros.local --password '<mdp>' --name Assistante --role assistante
+  ```
+- **Rôles = access control Better Auth**, pas des chaînes comparées à la main. `lib/auth/permissions.ts` définit `pasteur` (tout, y compris `membre:delete`) et `assistante` (tout sauf `delete`) via le plugin `admin`. Une Server Action qui doit vérifier "réservé au Pasteur" appelle `requireRole("pasteur")` de la DAL — ne pas réintroduire des `if (role !== "pasteur")` éparpillés.
+- **Schéma Prisma** : les modèles `User`/`Session`/`Account`/`Verification` sont **générés par Better Auth**, pas écrits à la main. Après toute modification de `lib/auth/auth.ts` (nouveau plugin, champ supplémentaire) : `npx auth generate --config lib/auth/auth.ts` puis `npx prisma generate` puis `npx prisma db push` (ou `migrate dev` une fois en prod).
+- Le client Prisma généré vit dans `generated/prisma/` (pas dans `app/generated/` — on garde `app/` réservé au routing Next.js), gitignored, importé via `@/generated/prisma/client`.
+
 ## Sécurité (§18 du cahier des charges)
 
-- Connexion obligatoire, mot de passe hashé (`bcryptjs`), jamais en clair même en base.
-- Déconnexion automatique après inactivité : cookie de session à courte durée + rafraîchi à chaque requête (voir Conventions ci-dessus), pas un cookie de 7 jours.
+- Connexion obligatoire. Mot de passe hashé par Better Auth (`scrypt`, natif Node — voir doc Better Auth), jamais en clair même en base.
+- Déconnexion automatique après inactivité : session Better Auth à courte durée + rafraîchie sur activité (voir §Conventions Next.js et §Authentification), pas un cookie de 7 jours.
 - Journalisation : chaque création/modification/suppression passe par une table `journal_actions` (qui, quoi, quand).
 - Sauvegarde automatique de la BDD : à mettre en place côté infra (pg_dump planifié ou snapshot managé), hors scope du code applicatif.
 - Ne jamais committer de vraies données de membres (photos, exports Excel/CSV/PDF) — `.gitignore` bloque déjà `/uploads/`, `/exports/`, `/public/uploads/` à la racine, et un hook Claude Code avertit sur `git add`/`git commit` si un fichier `.xlsx`/`.xls` ou un dossier `uploads/`/`exports/` niché ailleurs (donc non couvert par le `.gitignore` racine) semble être en train d'être staged.
@@ -161,3 +176,4 @@ Ces noms d'agents viennent de la configuration Claude Code locale, pas du repo �
 3. Toute nouvelle table Prisma qui touche à des données personnelles (téléphone, adresse, photo) : vérifier si elle doit apparaître dans le "Journal des actions" et si un champ doit être exclu des exports par défaut.
 4. `Cahier de Charges - SGMO.pdf` est actuellement non trackée par git (`??`) — décision de l'utilisateur à prendre : la committer (documentation du projet) ou la garder locale. Ne pas la committer sans demander.
 5. Avant de committer, suivre la section "Revue de code" ci-dessus.
+6. `.agents/skills/`, `.windsurf/skills/`, `.claude/skills/prisma-*`, `skills-lock.json` : docs Prisma auto-installées par `prisma init` (markdown seul, pas de code exécuté) pour que d'autres outils IA sur ce repo aient la doc à jour. Laissés en l'état, pas générés par nous.

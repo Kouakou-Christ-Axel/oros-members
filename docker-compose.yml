@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oros
+      POSTGRES_PASSWORD: oros
+      POSTGRES_DB: oros
+    ports:
+      - "5433:5432"
+    volumes:
+      - oros_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  oros_postgres_data:
