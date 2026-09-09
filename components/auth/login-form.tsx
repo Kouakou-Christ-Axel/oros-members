@@ -13,12 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Alert } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-
-const QUICK_ACCOUNTS = [
-  { role: "pasteur", label: "Pasteur", email: "pasteur@oros.local" },
-  { role: "assistante", label: "Assistante", email: "assistante@oros.local" },
-] as const;
 
 const loginSchema = z.object({
   email: z.email("Email invalide"),
@@ -30,10 +24,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 /* Formulaire de connexion — Client Component car signIn.email() est un appel
    fetch client-side (SDK Better Auth), pas une Server Action. Le rôle
    (pasteur/assistante) n'est jamais choisi ici : il vient du compte, résolu
-   côté serveur (voir lib/auth/permissions.ts). Les boutons "Connexion rapide"
-   ne pré-remplissent que l'email (2 comptes fixes connus) — le mot de passe
-   reste obligatoire, contrairement au sélecteur de démo de la maquette qui
-   connectait directement sans authentification réelle. */
+   côté serveur (voir lib/auth/permissions.ts). */
 export function LoginForm() {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(true);
@@ -42,7 +33,6 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -102,28 +92,6 @@ export function LoginForm() {
             <Icon name="lock" size={16} />
             {pending ? "Connexion…" : "Se connecter"}
           </Button>
-          <Separator />
-          <div className="flex flex-col gap-2">
-            <span className="text-xs text-muted-foreground">Connexion rapide :</span>
-            <div className="flex gap-2">
-              {QUICK_ACCOUNTS.map((account) => (
-                <Button
-                  key={account.role}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  disabled={pending}
-                  onClick={() => {
-                    setValue("email", account.email, { shouldValidate: true });
-                    document.getElementById("password")?.focus();
-                  }}
-                >
-                  {account.label}
-                </Button>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
     </form>
