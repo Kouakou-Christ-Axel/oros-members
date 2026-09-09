@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/dal";
 import { LoginForm } from "./_components/login-form";
@@ -18,7 +19,7 @@ export default async function LoginPage() {
   return (
     <div data-slot="auth-shell">
       <div data-slot="auth-hero">
-        <span data-slot="auth-hero-brand">OROS MEMBERS</span>
+        <Image src="/logo-oros-white.png" alt="OROS" data-slot="auth-hero-logo" width={504} height={338} priority />
         <div>
           <h1 data-slot="auth-hero-title">La mémoire de l&apos;assemblée, tenue à jour.</h1>
           <p data-slot="auth-hero-text">
@@ -32,6 +33,7 @@ export default async function LoginPage() {
       <div data-slot="auth-panel">
         <div data-slot="auth-panel-inner">
           <div>
+            <Image src="/logo-oros.png" alt="" data-slot="auth-panel-logo" width={504} height={338} />
             <h2 data-slot="auth-panel-title">Connexion</h2>
             <p data-slot="auth-panel-subtitle">Accès réservé au Pasteur et à son assistante.</p>
           </div>
