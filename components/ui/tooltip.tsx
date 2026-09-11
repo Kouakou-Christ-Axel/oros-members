@@ -24,7 +24,7 @@ export function Tooltip({ label, side = "top", children, className }: TooltipPro
   return (
     <span
       className={className}
-      style={{ position: "relative", display: "inline-flex" }}
+      style={{ position: "relative", display: "flex", width: "100%" }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       onFocus={() => setOpen(true)}
