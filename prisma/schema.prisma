@@ -79,3 +79,80 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+enum Assiduite {
+  nouveau
+  regulier
+  irregulier
+  deserteur
+  actif
+}
+
+enum Parcours {
+  serviteur
+  leader
+  pasteur
+}
+
+model Departement {
+  id       String   @id @default(cuid())
+  nom      String   @unique
+  icon     String   @default("briefcase-business")
+  capacite Int      @default(0)
+  membres  Membre[]
+
+  @@map("departement")
+}
+
+model Membre {
+  id                     String             @id @default(cuid())
+  code                   String             @unique
+  nom                    String
+  genre                  String
+  dateNaissance          DateTime?
+  telephone              String
+  email                  String?
+  quartier               String?
+  st                     Assiduite          @default(nouveau)
+  pk                     Parcours?
+  departementId          String?
+  departement            Departement?       @relation(fields: [departementId], references: [id])
+  dateArrivee            DateTime
+  dateBapteme            DateTime?
+  ecoleNouveauxConvertis DateTime?
+  dernierePresence       DateTime?
+  deletedAt              DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  historique             HistoriqueMembre[]
+
+  @@index([st])
+  @@index([deletedAt])
+  @@index([telephone])
+  @@map("membre")
+}
+
+/// Append-only : jamais de UPDATE/DELETE sur cette table.
+model HistoriqueMembre {
+  id        String   @id @default(cuid())
+  membreId  String
+  membre    Membre   @relation(fields: [membreId], references: [id])
+  type      String
+  valeur    String
+  par       String
+  createdAt DateTime @default(now())
+
+  @@index([membreId])
+  @@map("historique_membre")
+}
+
+model JournalAction {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  cible     String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("journal_action")
+}
