@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import {
-  useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel,
-  type ColumnDef, type RowSelectionState, type SortingState,
+  useTable, tableFeatures, rowSortingFeature, rowSelectionFeature, rowPaginationFeature,
+  createSortedRowModel, createPaginatedRowModel,
+  type ColumnDef, type RowSelectionState, type SortingState, type PaginationState,
 } from "@tanstack/react-table";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,9 +25,17 @@ const PAGE_SIZE = 25;
 const dim = { color: "var(--text-disabled)" };
 const mono = { fontFamily: "var(--font-mono)", fontSize: 12 };
 
+const features = tableFeatures({
+  rowSortingFeature,
+  rowSelectionFeature,
+  rowPaginationFeature,
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+});
+
 // Colonnes pour le tri uniquement : le rendu des cellules est fait à la main
 // avec le Table du design system.
-const columns: ColumnDef<MembreRow>[] = [
+const columns: ColumnDef<typeof features, MembreRow>[] = [
   { accessorKey: "st" },
   { accessorKey: "presenceTs", sortDescFirst: true },
 ];
@@ -40,18 +49,17 @@ export function MembresTable({ rows, isPasteur }: { rows: MembreRow[]; isPasteur
   const [menu, setMenu] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<string[] | null>(null);
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- limite connue de TanStack Table v8 avec React Compiler : la table n'est pas passée à des composants mémoïsés.
-  const table = useReactTable({
-    data: rows,
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
+
+  const table = useTable({
+    features,
     columns,
-    state: { sorting, rowSelection: selection },
+    data: rows,
+    state: { sorting, rowSelection: selection, pagination },
     getRowId: (r) => r.id,
     onSortingChange: setSorting,
     onRowSelectionChange: setSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: PAGE_SIZE } },
+    onPaginationChange: setPagination,
   });
 
   const selected = Object.keys(selection);
@@ -132,7 +140,7 @@ export function MembresTable({ rows, isPasteur }: { rows: MembreRow[]; isPasteur
       </Card>
 
       <Pagination
-        page={table.getState().pagination.pageIndex + 1}
+        page={pagination.pageIndex + 1}
         pageCount={Math.max(1, table.getPageCount())}
         total={rows.length}
         pageSize={PAGE_SIZE}
