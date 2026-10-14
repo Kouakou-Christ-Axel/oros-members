@@ -56,7 +56,19 @@ async function main() {
       dateNaissance: d(ne), dateArrivee: d(arrivee)!, dateBapteme: d(bapteme), dernierePresence: d(presence),
       departementId: ids.get(dept) ?? null,
     };
-    await db.membre.upsert({ where: { code }, update: data, create: { code, ...data } });
+    const m = await db.membre.upsert({ where: { code }, update: data, create: { code, ...data } });
+    if ((await db.historiqueMembre.count({ where: { membreId: m.id } })) === 0) {
+      const h = (type: string, valeur: string, createdAt: Date | null) =>
+        createdAt ? [{ membreId: m.id, type, valeur, par: "Assistante", createdAt }] : [];
+      await db.historiqueMembre.createMany({
+        data: [
+          ...h("creation", "Fiche créée", data.dateArrivee),
+          ...h("bapteme", "Baptême enregistré", data.dateBapteme),
+          ...(data.departementId ? h("departement", `Département → ${dept}`, data.dateArrivee) : []),
+          ...(pk ? h("parcours", `Parcours → ${pk}`, data.dateBapteme ?? data.dateArrivee) : []),
+        ],
+      });
+    }
   }
   console.log(`Seed OK : ${DEPARTEMENTS.length} départements, ${MEMBRES.length} membres`);
 }

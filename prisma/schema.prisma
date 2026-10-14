@@ -112,6 +112,14 @@ model Membre {
   dateNaissance          DateTime?
   telephone              String
   email                  String?
+  whatsapp               String?
+  situationMatrimoniale  String?
+  nombreEnfants          Int?
+  nationalite            String?
+  profession             String?
+  personneAPrevenir      String?
+  fonction               String?
+  eglisePrecedente       String?
   quartier               String?
   st                     Assiduite          @default(nouveau)
   pk                     Parcours?

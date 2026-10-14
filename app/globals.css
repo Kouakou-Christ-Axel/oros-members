@@ -669,6 +669,7 @@ hr{border:0;border-top:var(--border-w) solid var(--border-subtle);margin:var(--s
   :root{--surface-app:#fff;--surface-card:#fff}
   body{background:#fff;font-size:12pt;line-height:1.45}
   .oros-no-print{display:none!important}
+  [data-slot="sidebar"],[data-slot="topbar"]{display:none!important}
   .oros-print-only{display:revert!important}
   .oros-print-sheet{box-shadow:none!important;border:0!important;margin:0!important;padding:0!important;max-width:none!important}
   a{color:var(--text-primary);border-bottom:0}
