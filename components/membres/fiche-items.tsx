@@ -8,7 +8,7 @@ export function identiteItems(f: Fiche): DefinitionItem[] {
   return [
     { term: "Nom et prénoms", value: f.nom },
     { term: "Code membre", value: mono(f.code) },
-    { term: "Sexe", value: f.genre === "F" ? "Féminin" : "Masculin" },
+    { term: "Sexe", value: f.genre === "F" ? "Féminin" : f.genre === "M" ? "Masculin" : null },
     { term: "Date de naissance", value: f.identite.naissance },
     { term: "Situation matrimoniale", value: f.identite.matrimoniale },
     { term: "Nombre d'enfants", value: f.identite.enfants },

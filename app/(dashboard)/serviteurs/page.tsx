@@ -4,6 +4,7 @@ import { Page, PageHeader } from "@/components/oros/app-shell";
 import { MemberIdentity } from "@/components/oros/member-identity";
 import { StatusBadge } from "@/components/oros/status-badge";
 import { Card } from "@/components/ui/card";
+import { ExportButton } from "@/components/export-button";
 import { Empty } from "@/components/ui/empty";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { ServiteursToolbar } from "@/components/serviteurs/serviteurs-toolbar";
@@ -21,7 +22,7 @@ export default async function ServiteursPage({ searchParams }: PageProps<"/servi
 
   return (
     <Page>
-      <PageHeader title="Serviteurs" subtitle={`${counts.tous} serviteurs · ${counts.leader} leaders`} />
+      <PageHeader title="Serviteurs" subtitle={`${counts.tous} serviteurs · ${counts.leader} leaders`} actions={<ExportButton type="serviteurs" />} />
       <ServiteursToolbar counts={counts} />
       <Card pad="flush">
         {rows.length === 0 ? (

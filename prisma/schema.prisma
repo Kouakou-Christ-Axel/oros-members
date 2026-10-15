@@ -111,7 +111,7 @@ model Membre {
   code                   String             @unique
   nom                    String
   prenoms                String?
-  genre                  String
+  genre                  String?
   dateNaissance          DateTime?
   telephone              String
   email                  String?

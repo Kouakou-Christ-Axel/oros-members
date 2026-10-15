@@ -31,7 +31,7 @@ export interface Fiche {
   id: string;
   code: string;
   nom: string;
-  genre: string;
+  genre: string | null;
   st: Assiduite;
   pk: Parcours | null;
   departement: string | null;
