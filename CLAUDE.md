@@ -138,6 +138,18 @@ Deux projets Claude Design, lus via l'outil `DesignSync` (méthodes `list_files`
 - **Schéma Prisma** : les modèles `User`/`Session`/`Account`/`Verification` sont **générés par Better Auth**, pas écrits à la main. Après toute modification de `lib/auth/auth.ts` (nouveau plugin, champ supplémentaire) : `npx auth generate --config lib/auth/auth.ts` puis `npx prisma generate` puis `npx prisma db push` (ou `migrate dev` une fois en prod).
 - Le client Prisma généré vit dans `generated/prisma/` (pas dans `app/generated/` — on garde `app/` réservé au routing Next.js), gitignored, importé via `@/generated/prisma/client`.
 
+## Décisions d'implémentation (écrans livrés)
+
+- **Base : `npx prisma db push --config prisma7.config.ts`**, pas `migrate dev` — la base locale a été créée avec `db push` et `migrate dev` voudrait la réinitialiser (perte des comptes). Pas de dossier `prisma/migrations` pour l'instant ; à introduire avant la prod. Seed factice : `npm run db:seed` (données de la maquette, jamais de vraies données).
+- **TanStack Table = v9** (`useTable` + `tableFeatures`), seule version compatible React Compiler. Ne pas rétrograder en v8 ni ajouter d'`eslint-disable`.
+- **Fichiers `"use server"`** : n'exporter que des fonctions `async` déclarées (`export async function`), jamais de `const x = () => …` (le build échoue, le typecheck ne le voit pas). Toujours lancer `npm run build` avant de conclure une série d'écrans.
+- **Mutations métier** : `lib/actions/membres/{create,update,delete}.ts`, `lib/actions/departements.ts`. Création/modification de fiche ouverte aux deux rôles ; suppression de fiche et gestion des départements = `requireRole("pasteur")`. Chaque changement d'assiduité/parcours/département ajoute une ligne à `HistoriqueMembre` ; chaque mutation écrit dans `JournalAction`.
+- **Import Excel** : `lib/import/{parse,match,run}.ts` + Route Handler `app/api/import/route.ts` (aperçu puis import, même fichier renvoyé). Colonnes reconnues automatiquement par intitulé (pas d'écran de correspondance manuelle). Auto-vérification : `npx tsx lib/import/check.ts`. `@tanstack/react-query` n'est **pas** installé : `fetch` + `useState` suffisent pour ce flux.
+- **Export** : `app/api/export/[type]` (membres, serviteurs, departements, modele ; xlsx ou csv). Les notes pastorales ne sont jamais exportées.
+- **Règle « Régulier après 3 mois »** : `lib/regles.ts`, déclenchée par `after()` à l'ouverture du tableau de bord (idempotente, entrée d'historique « Système »). À déplacer dans une tâche planifiée si besoin.
+- **Non livré (hors maquette ou hors périmètre)** : Statistiques et Paramètres (« écran non maquetté »), photo du membre (upload), changement de statut/affectation en masse, transfert de département, sauvegarde BDD (infra), création des comptes (CLI Better Auth, voir §Authentification).
+- **Environnement local** : `BETTER_AUTH_URL` = `http://localhost:3000` ; si `next dev` démarre sur un autre port, la connexion est refusée (origine invalide). Libérer le port 3000 avant `npm run dev`.
+
 ## Sécurité (§18 du cahier des charges)
 
 - Connexion obligatoire. Mot de passe hashé par Better Auth (`scrypt`, natif Node — voir doc Better Auth), jamais en clair même en base.
