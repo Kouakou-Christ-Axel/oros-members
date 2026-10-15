@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { PresenceButton } from "@/components/membres/presence-button";
 import { MembreDeleteDialog } from "@/components/membres/membre-delete-dialog";
 
 function LinkButton({ href, variant, icon, label }: { href: string; variant: string; icon: IconName; label: string }) {
@@ -15,13 +16,14 @@ function LinkButton({ href, variant, icon, label }: { href: string; variant: str
   );
 }
 
-export function FicheActions({ id, isPasteur }: { id: string; isPasteur: boolean }) {
+export function FicheActions({ id, isPasteur, presentAujourdhui }: { id: string; isPasteur: boolean; presentAujourdhui: boolean }) {
   const router = useRouter();
   const [del, setDel] = useState<string[] | null>(null);
 
   return (
     <>
       <LinkButton href="/membres" variant="ghost" icon="arrow-left" label="Retour" />
+      <PresenceButton id={id} presentAujourdhui={presentAujourdhui} />
       <LinkButton href={`/membres/${id}/modifier`} variant="outline" icon="square-pen" label="Modifier" />
       <LinkButton href={`/membres/${id}/imprimer`} variant="outline" icon="printer" label="Fiche imprimable" />
       <Button variant="destructive" disabled={!isPasteur} onClick={() => setDel([id])}>

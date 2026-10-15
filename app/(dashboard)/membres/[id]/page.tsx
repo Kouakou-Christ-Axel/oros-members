@@ -32,7 +32,7 @@ export default async function FichePage({ params }: PageProps<"/membres/[id]">) 
             {fiche.departement ? <Badge variant="secondary">{fiche.departement}</Badge> : <Badge variant="outline">Non affecté</Badge>}
           </span>
         }
-        actions={<FicheActions id={fiche.id} isPasteur={session.user.role === "pasteur"} />}
+        actions={<FicheActions id={fiche.id} isPasteur={session.user.role === "pasteur"} presentAujourdhui={fiche.presentAujourdhui} />}
       />
       {!fiche.complet ? (
         <Alert variant="warning" title="Fiche incomplète">

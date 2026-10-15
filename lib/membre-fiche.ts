@@ -17,6 +17,7 @@ const ACTION_LABEL: Record<string, string> = {
   departement: "Département attribué",
   parcours: "Statut modifié",
   assiduite: "Statut modifié",
+  presence: "Présence enregistrée",
 };
 
 export interface TimelineItem {
@@ -36,6 +37,7 @@ export interface Fiche {
   pk: Parcours | null;
   departement: string | null;
   complet: boolean;
+  presentAujourdhui: boolean;
   identite: Record<"naissance" | "matrimoniale" | "enfants" | "nationalite" | "profession", string | null>;
   coordonnees: Record<"telephone" | "whatsapp" | "email" | "quartier" | "aPrevenir", string | null>;
   eglise: Record<"arrivee" | "bapteme" | "fonction" | "presence" | "provenance", string | null>;
@@ -74,6 +76,7 @@ export async function getFiche(id: string): Promise<Fiche | null> {
     pk: m.pk,
     departement: m.departement?.nom ?? null,
     complet: !!(m.dateBapteme && m.departementId),
+    presentAujourdhui: !!m.dernierePresence && m.dernierePresence.toISOString().slice(0, 10) >= new Date().toISOString().slice(0, 10),
     identite: {
       naissance: fmt(dateCourte, m.dateNaissance),
       matrimoniale: m.situationMatrimoniale,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import {
   useTable, tableFeatures, rowSortingFeature, rowSelectionFeature, rowPaginationFeature,
@@ -15,9 +14,9 @@ import { Icon } from "@/components/ui/icon";
 import { Pagination } from "@/components/ui/pagination";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { MemberIdentity } from "@/components/oros/member-identity";
 import { StatusBadge } from "@/components/oros/status-badge";
+import { MembreRowMenu } from "@/components/membres/membre-row-menu";
 import { MembreDeleteDialog } from "@/components/membres/membre-delete-dialog";
 import type { MembreRow } from "@/lib/membres";
 
@@ -46,7 +45,6 @@ export function MembresTable({ rows, isPasteur }: { rows: MembreRow[]; isPasteur
   const [compact] = useQueryState("compact", parseAsBoolean.withDefault(true));
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selection, setSelection] = useState<RowSelectionState>({});
-  const [menu, setMenu] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<string[] | null>(null);
 
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE });
@@ -118,19 +116,7 @@ export function MembresTable({ rows, isPasteur }: { rows: MembreRow[]; isPasteur
                   <TableCell style={{ ...mono, color: "var(--warm-600)" }}>{m.telephone}</TableCell>
                   <TableCell style={{ ...mono, color: "var(--muted-foreground)" }}>{m.presence}</TableCell>
                   <TableCell style={{ textAlign: "right", paddingRight: 18, position: "relative" }}>
-                    <Button variant="ghost" size="icon-sm" aria-label="Actions" onClick={() => setMenu(menu === m.id ? null : m.id)}>
-                      <Icon name="ellipsis" size={16} />
-                    </Button>
-                    {menu === m.id ? (
-                      <DropdownMenu width={216} style={{ textAlign: "left" }}>
-                        <DropdownMenuLabel>{m.nom}</DropdownMenuLabel>
-                        <Link href={`/membres/${m.id}`}><DropdownMenuItem><Icon name="eye" />Ouvrir la fiche</DropdownMenuItem></Link>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" disabled={!isPasteur} onClick={() => { setMenu(null); if (isPasteur) setToDelete([m.id]); }}>
-                          <Icon name="trash" />Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenu>
-                    ) : null}
+                    <MembreRowMenu id={m.id} nom={m.nom} isPasteur={isPasteur} onDelete={(x) => setToDelete([x])} />
                   </TableCell>
                 </TableRow>
               );
