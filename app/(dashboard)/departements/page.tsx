@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Page, PageHeader } from "@/components/oros/app-shell";
-import { ExportButton } from "@/components/export-button";
+import { ExportButton } from "@/components/export/export-button";
 import { DepartementsGrid } from "@/components/departements/departements-grid";
 import { requireSession } from "@/lib/auth/dal";
 import { listDepartementCards, listResponsables } from "@/lib/departements";

@@ -5,10 +5,9 @@ import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth/dal";
 import { membreSchema, type MembreFormValues } from "@/lib/validations/membre";
 import { toPrisma } from "@/lib/membre-data";
+import { LABEL_PK, LABEL_ST } from "@/lib/membre-labels";
 import type { ActionResult } from "@/lib/actions/membres/create";
 
-const LABEL_PK = { serviteur: "Serviteur", leader: "Leader", pasteur: "Pasteur consacré" } as const;
-const LABEL_ST = { nouveau: "Nouveau", regulier: "Régulier", irregulier: "Irrégulier", deserteur: "Déserteur", actif: "Actif" } as const;
 
 /* Chaque changement d'assiduité, de parcours ou de département est AJOUTÉ à
    l'historique (append-only) — jamais d'écrasement d'une entrée passée. */

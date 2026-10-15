@@ -15,7 +15,6 @@ import { PrintButton } from "@/components/dashboard/print-button";
 import { requireSession } from "@/lib/auth/dal";
 import { getDashboard } from "@/lib/dashboard";
 import { isPeriode, resolvePeriode, PERIODES } from "@/lib/dashboard-periode";
-import { db } from "@/lib/db";
 import { promouvoirNouveaux } from "@/lib/regles";
 
 export const metadata: Metadata = { title: "Tableau de bord — OROS MEMBERS" };
@@ -31,12 +30,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   after(() => promouvoirNouveaux(now)); // règle « Régulier après 3 mois », hors chemin de réponse
   const periode = resolvePeriode(id, now, one(sp.du), one(sp.au));
 
-  const [d, noms] = await Promise.all([
-    getDashboard(periode, dept, now),
-    db.departement.findMany({ select: { nom: true }, orderBy: { nom: "asc" } }),
-  ]);
+  const d = await getDashboard(periode, dept, now);
   const libelle = PERIODES.find((p) => p.id === id)!.label;
-  const totalSerie = d.serie.reduce((s, b) => s + b.value, 0);
 
   return (
     <Page>
@@ -52,7 +47,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           </>
         }
       />
-      <DashboardFilters departements={noms.map((n) => n.nom)} />
+      <DashboardFilters departements={d.nomsDepartements} />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(206px,1fr))", gap: 16 }}>
         <StatCard label="Membres" value={d.stats.total} icon="users-round" accent="brand" />
@@ -64,7 +59,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <RelanceCard lignes={d.relance} deserteurs={d.stats.deserteurs} irreguliers={d.stats.irreguliers} filtre={dept !== ""} />
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.55fr) minmax(0,1fr)", gap: 16, alignItems: "start" }} className="oros-dash-split">
-        <ArriveesCard serie={d.serie} unite={periode.unite} total={totalSerie} />
+        <ArriveesCard serie={d.serie} unite={periode.unite} total={d.totalSerie} />
         <AnniversairesCard items={d.anniversaires} now={now} />
       </div>
 

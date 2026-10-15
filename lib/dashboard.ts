@@ -86,6 +86,8 @@ export async function getDashboard(periode: Periode, dept: string, now: Date) {
       .map((m) => ligne(m, "presence", now))
       .sort((a, b) => b.jours - a.jours),
     recents: recents.map((m) => ligne(m, "arrivee", now)),
+    nomsDepartements: departements.map((d) => d.nom),
+    totalSerie: serie.reduce((s, b) => s + b.value, 0),
     departements: departements.map((d) => ({
       id: d.id, nom: d.nom, capacite: d.capacite,
       serviteurs: serviteursParDept.find((r) => r.departementId === d.id)?._count ?? 0,

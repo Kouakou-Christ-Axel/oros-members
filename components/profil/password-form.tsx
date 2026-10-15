@@ -5,6 +5,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { authClient } from "@/lib/auth/client";
+import { forceMotDePasse } from "@/lib/mot-de-passe";
+import { journaliserChangementMotDePasse } from "@/lib/actions/compte";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -25,15 +27,6 @@ const schema = z
 
 type Values = z.infer<typeof schema>;
 
-function force(mdp: string) {
-  let n = 0;
-  if (mdp.length >= 10) n++;
-  if (mdp.length >= 14) n++;
-  if (/[A-Z]/.test(mdp) && /[a-z]/.test(mdp)) n++;
-  if (/[0-9]/.test(mdp)) n++;
-  if (/[^A-Za-z0-9]/.test(mdp)) n++;
-  return Math.min(n, 4);
-}
 const MOTS = ["Trop court", "Faible", "Acceptable", "Bonne", "Très bonne"];
 const COULEURS = ["var(--st-deserteur-dot)", "var(--st-deserteur-dot)", "var(--st-irregulier-dot)", "var(--st-regulier-dot)", "var(--st-regulier-dot)"];
 
@@ -46,7 +39,7 @@ export function PasswordForm() {
     defaultValues: { actuel: "", nouveau: "", confirme: "" },
   });
   const nouveau = useWatch({ control, name: "nouveau" });
-  const f = force(nouveau);
+  const f = forceMotDePasse(nouveau);
   const type = voir ? "text" : "password";
 
   const onSubmit = handleSubmit(async (v) => {
@@ -54,6 +47,7 @@ export function PasswordForm() {
     setErreur(null);
     const { error } = await authClient.changePassword({ currentPassword: v.actuel, newPassword: v.nouveau, revokeOtherSessions: true });
     if (error) return setErreur(error.status === 400 ? "Le mot de passe actuel est incorrect." : "Changement impossible. Réessayez dans un instant.");
+    await journaliserChangementMotDePasse();
     reset();
     setOk(true);
   });

@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { parseWorkbook, norm, type ImportRow } from "@/lib/import/parse";
+import { LABEL_ST } from "@/lib/membre-labels";
 import { Index, champsModifies, etatDe, type Etat, type Existant } from "@/lib/import/match";
 
 export type Strategie = "update" | "skip" | "dup";
@@ -78,8 +79,14 @@ export async function importer(buf: ArrayBuffer, strategie: Strategie, user: { i
 
       if (trouve && strategie !== "dup") {
         if (strategie === "skip" || modifs.length === 0) { rapport.ignorees++; continue; }
-        await tx.membre.update({ where: { id: trouve.id }, data: data(r, depId(r.departement)) as Prisma.MembreUncheckedUpdateInput });
-        if (r.st && r.st !== trouve.st) await tx.historiqueMembre.create({ data: { membreId: trouve.id, type: "assiduite", valeur: `Assiduité → ${r.st}`, par: user.name } });
+        const dep = depId(r.departement);
+        await tx.membre.update({ where: { id: trouve.id }, data: data(r, dep) as Prisma.MembreUncheckedUpdateInput });
+        const lignes = [
+          ...(r.st && r.st !== trouve.st ? [{ type: "assiduite", valeur: `Assiduité → ${LABEL_ST[r.st]}` }] : []),
+          ...(dep && norm(r.departement) !== norm(trouve.departementNom) ? [{ type: "departement", valeur: `Département → ${r.departement}` }] : []),
+        ];
+        if (lignes.length) await tx.historiqueMembre.createMany({ data: lignes.map((l) => ({ ...l, membreId: trouve.id, par: user.name })) });
+        index.add({ ...trouve, st: r.st ?? trouve.st, departementNom: dep ? r.departement : trouve.departementNom });
         rapport.maj++;
         continue;
       }

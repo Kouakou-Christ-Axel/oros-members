@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/oros/app-shell";
 import { Icon } from "@/components/ui/icon";
-import { ExportButton } from "@/components/export-button";
+import { ExportButton } from "@/components/export/export-button";
 import { Card } from "@/components/ui/card";
 import { Empty } from "@/components/ui/empty";
 import { MembresToolbar } from "@/components/membres/membres-toolbar";
