@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 import Link from "next/link";
 import { Page, PageHeader } from "@/components/oros/app-shell";
 import { StatCard } from "@/components/oros/stat-card";
@@ -15,6 +16,7 @@ import { requireSession } from "@/lib/auth/dal";
 import { getDashboard } from "@/lib/dashboard";
 import { isPeriode, resolvePeriode, PERIODES } from "@/lib/dashboard-periode";
 import { db } from "@/lib/db";
+import { promouvoirNouveaux } from "@/lib/regles";
 
 export const metadata: Metadata = { title: "Tableau de bord — OROS MEMBERS" };
 
@@ -26,6 +28,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const id = isPeriode(one(sp.periode)) ? (one(sp.periode) as (typeof PERIODES)[number]["id"]) : "mois";
   const dept = one(sp.dept) ?? "";
   const now = new Date();
+  after(() => promouvoirNouveaux(now)); // règle « Régulier après 3 mois », hors chemin de réponse
   const periode = resolvePeriode(id, now, one(sp.du), one(sp.au));
 
   const [d, noms] = await Promise.all([

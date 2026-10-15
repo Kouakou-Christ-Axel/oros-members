@@ -31,8 +31,13 @@ async function enregistrer(id: string | null, values: DepartementValues): Promis
   return { ok: true };
 }
 
-export const creerDepartement = (values: DepartementValues) => enregistrer(null, values);
-export const modifierDepartement = (id: string, values: DepartementValues) => enregistrer(id, values);
+export async function creerDepartement(values: DepartementValues) {
+  return enregistrer(null, values);
+}
+
+export async function modifierDepartement(id: string, values: DepartementValues) {
+  return enregistrer(id, values);
+}
 
 export async function supprimerDepartement(id: string): Promise<DepartementResult> {
   const { user } = await requireRole("pasteur");

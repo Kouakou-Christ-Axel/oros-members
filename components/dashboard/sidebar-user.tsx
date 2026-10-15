@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth/client";
 import { Avatar } from "@/components/ui/avatar";
@@ -32,10 +33,10 @@ export function SidebarUser({ name, role }: SidebarUserProps) {
   return (
     <>
       <Avatar initials={initials} size={28} />
-      <div data-slot="sidebar-brand" style={{ flex: 1 }}>
+      <Link href="/profil" data-slot="sidebar-brand" style={{ flex: 1 }} aria-label="Mon compte">
         <span data-slot="sidebar-brand-name">{name}</span>
         <span data-slot="sidebar-brand-sub">{role === "pasteur" ? "Pasteur" : "Assistante"}</span>
-      </div>
+      </Link>
       <Button
         variant="ghost"
         size="icon-sm"

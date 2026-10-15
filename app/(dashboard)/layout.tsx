@@ -14,7 +14,7 @@ import {
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { SidebarUser } from "@/components/dashboard/sidebar-user";
 import { Topbar } from "@/components/oros/app-shell";
-import { SearchInput } from "@/components/ui/input";
+import { TopbarSearch } from "@/components/dashboard/topbar-search";
 import { Icon } from "@/components/ui/icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <SidebarInset>
         <Topbar>
           <SidebarTrigger />
-          <SearchInput style={{ flex: 1, maxWidth: 360 }} />
+          <TopbarSearch />
           <Badge variant="secondary">{session.user.role === "pasteur" ? "Pasteur" : "Assistante"}</Badge>
           <Button variant="ghost" size="icon-sm" aria-label="Notifications">
             <Icon name="bell" size={18} />
