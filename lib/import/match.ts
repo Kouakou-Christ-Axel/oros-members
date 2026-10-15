@@ -44,7 +44,7 @@ export class Index {
 }
 
 /** Champs que la ligne modifierait sur la fiche existante (valeurs non vides uniquement). */
-export function champsModifies(r: ImportRow, e: Existant): string[] {
+export function champsModifies(r: ImportRow, e: Existant, deptConnus?: Set<string>): string[] {
   const diff: string[] = [];
   if (r.prenoms && norm(r.prenoms) !== norm(e.prenoms)) diff.push("prénoms");
   if (r.genre && r.genre !== e.genre) diff.push("sexe");
@@ -52,16 +52,17 @@ export function champsModifies(r: ImportRow, e: Existant): string[] {
   if (r.email && norm(r.email) !== norm(e.email)) diff.push("email");
   if (r.quartier && norm(r.quartier) !== norm(e.quartier)) diff.push("quartier");
   if (r.st && r.st !== e.st) diff.push("assiduité");
-  if (r.departement && norm(r.departement) !== norm(e.departementNom)) diff.push("département");
+  // un département inconnu ne peut pas être écrit : il ne compte pas comme modification
+  if (r.departement && (!deptConnus || deptConnus.has(norm(r.departement))) && norm(r.departement) !== norm(e.departementNom)) diff.push("département");
   if (chiffres(r.telephone) !== chiffres(e.telephone)) diff.push("téléphone");
   return diff;
 }
 
-export function etatDe(r: ImportRow, index: Index): { etat: Etat; detail: string } {
+export function etatDe(r: ImportRow, index: Index, deptConnus?: Set<string>): { etat: Etat; detail: string } {
   if (r.erreur) return { etat: "erreur", detail: r.erreur };
   const e = index.find(r);
   if (!e) return { etat: "nouveau", detail: "" };
-  const diff = champsModifies(r, e);
+  const diff = champsModifies(r, e, deptConnus);
   return diff.length
     ? { etat: "maj", detail: `${diff.length} champ(s) modifié(s) : ${diff.join(", ")}` }
     : { etat: "doublon", detail: "Fiche identique existante" };

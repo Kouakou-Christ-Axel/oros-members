@@ -35,6 +35,10 @@ export function FormParcours({ departements }: { departements: { id: string; nom
             </NativeSelect>
           </Field>
         </FieldGrid>
+        <FieldGrid cols={2}>
+          <Field label="Dernière présence" error={e.dernierePresence?.message} hint="Alimente les relances et le passage automatique en Régulier."><Input type="date" {...register("dernierePresence")} /></Field>
+          <Field label="École des nouveaux convertis" error={e.ecoleNouveauxConvertis?.message} hint="Date de fin de la formation."><Input type="date" {...register("ecoleNouveauxConvertis")} /></Field>
+        </FieldGrid>
         <Separator />
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
           <Controller control={control} name="baptise" render={({ field }) => <Checkbox checked={field.value} onChange={field.onChange} />} />

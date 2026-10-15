@@ -21,10 +21,10 @@ export function FormIdentite() {
       <CardContent style={col}>
         <FieldGrid cols={2}>
           <Field label="Nom" required error={e.nom?.message}><Input placeholder="Kouassi" {...register("nom")} /></Field>
-          <Field label="Prénoms" required error={e.prenoms?.message}><Input placeholder="Aïcha Marie-Claire" {...register("prenoms")} /></Field>
+          <Field label="Prénoms" error={e.prenoms?.message}><Input placeholder="Aïcha Marie-Claire" {...register("prenoms")} /></Field>
         </FieldGrid>
         <FieldGrid cols={3}>
-          <Field label="Sexe" required>
+          <Field label="Sexe">
             <Controller
               control={control}
               name="genre"
@@ -32,11 +32,12 @@ export function FormIdentite() {
                 <RadioGroup style={{ gridAutoFlow: "column", gap: 16, paddingTop: 7 }}>
                   <RadioGroupItem label="Féminin" checked={field.value === "F"} onChange={() => field.onChange("F")} />
                   <RadioGroupItem label="Masculin" checked={field.value === "M"} onChange={() => field.onChange("M")} />
+                  <RadioGroupItem label="Non précisé" checked={field.value === ""} onChange={() => field.onChange("")} />
                 </RadioGroup>
               )}
             />
           </Field>
-          <Field label="Date de naissance" required error={e.dateNaissance?.message}><Input type="date" {...register("dateNaissance")} /></Field>
+          <Field label="Date de naissance" error={e.dateNaissance?.message}><Input type="date" {...register("dateNaissance")} /></Field>
           <Field label="Lieu de naissance"><Input placeholder="Abidjan" {...register("lieuNaissance")} /></Field>
         </FieldGrid>
         <FieldGrid cols={3}>

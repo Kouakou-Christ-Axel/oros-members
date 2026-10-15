@@ -43,6 +43,8 @@ function mois(debut: Date, fin: Date): Bucket[] {
   return out;
 }
 
+const dateValide = (s?: string): s is string => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
+
 export function resolvePeriode(id: PeriodeId, now: Date, du?: string, au?: string): Periode {
   const demain = new Date(utc(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()).getTime() + DAY);
   const y = now.getUTCFullYear(), m = now.getUTCMonth();
@@ -52,9 +54,12 @@ export function resolvePeriode(id: PeriodeId, now: Date, du?: string, au?: strin
     case "annee": return { from: utc(y, 0), to: demain, buckets: mois(utc(y, 0), now), unite: "mois" };
     case "douze": { const d = utc(y, m - 11); return { from: d, to: demain, buckets: mois(d, now), unite: "mois" }; }
     case "plage": {
-      const a = du ? new Date(`${du}T00:00:00Z`) : utc(y, m - 11);
-      const b = au ? new Date(`${au}T00:00:00Z`) : now;
-      const [d, f] = a <= b ? [a, b] : [b, a];
+      const a = dateValide(du) ? new Date(`${du}T00:00:00Z`) : utc(y, m - 11);
+      const b = dateValide(au) ? new Date(`${au}T00:00:00Z`) : now;
+      const [debut, f] = a <= b ? [a, b] : [b, a];
+      // au plus 36 mois affichés, quelle que soit la plage demandée dans l'URL
+      const plancher = utc(f.getUTCFullYear(), f.getUTCMonth() - 35);
+      const d = debut < plancher ? plancher : debut;
       return { from: d, to: new Date(f.getTime() + DAY), buckets: mois(d, f), unite: "mois" };
     }
   }

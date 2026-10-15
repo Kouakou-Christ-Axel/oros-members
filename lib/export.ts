@@ -62,9 +62,16 @@ export async function buildTable(type: ExportType): Promise<Table> {
   }
 }
 
+const DECLENCHEURS = ["=", "+", "-", "@", String.fromCharCode(9), String.fromCharCode(13)];
+
 /** CSV pour Excel français : séparateur `;`, BOM UTF-8, guillemets doublés. */
 export function toCsv(t: Table) {
-  const cell = (c: Cell) => `"${String(c).replace(/"/g, '""')}"`;
+  // Excel exécute une cellule CSV qui commence par = + - @ (ou tabulation / retour chariot) : on la préfixe d'une apostrophe.
+  const cell = (c: Cell) => {
+    const s = String(c);
+    const sure = DECLENCHEURS.includes(s[0]) ? "'" + s : s;
+    return '"' + sure.replace(/"/g, '""') + '"';
+  };
   return String.fromCharCode(0xfeff) + [t.entetes, ...t.lignes].map((l) => l.map(cell).join(";")).join("\r\n");
 }
 

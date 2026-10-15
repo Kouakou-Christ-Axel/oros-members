@@ -27,3 +27,26 @@ const etats = rows.map((r) => etatDe(r, index).etat);
 // Aïcha : tel identique (indicatif ignoré), mais genre/statut identiques -> doublon
 assert.deepEqual(etats, ["nouveau", "doublon", "erreur", "erreur"]);
 console.log("import check OK", etats.join(", "));
+
+// Cas de la revue : téléphone numérique sans 0 initial, ligne vide (numéros de ligne), département inconnu.
+const feuille2 = XLSX.utils.aoa_to_sheet([
+  ["Nom et prénoms", "Téléphone", "Département"],
+  ["Emmanuel Amani", 708114290, "Direction"], // nombre : le 0 initial est perdu par Excel
+  [],                                          // ligne vide (ligne 3 du fichier)
+  ["Serge Okou", "07 91 40 23 88", "Inconnu"], // département inconnu
+]);
+const wb2 = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb2, feuille2, "M");
+const r2 = parseWorkbook(XLSX.write(wb2, { type: "array", bookType: "xlsx" }) as ArrayBuffer).rows;
+assert.deepEqual(r2.map((r) => r.ligne), [2, 4]); // la ligne vide est ignorée, la numérotation reste celle du fichier
+assert.equal(r2[0].telephone, "0708114290");
+
+const existants2: Existant[] = [
+  { id: "a", nom: "Emmanuel Amani", prenoms: null, telephone: "+225 07 08 11 42 90", email: null, dateNaissance: null, quartier: null, genre: null, st: "actif", departementNom: "Direction" },
+  { id: "b", nom: "Serge Okou", prenoms: null, telephone: "+225 07 91 40 23 88", email: null, dateNaissance: null, quartier: null, genre: null, st: "irregulier", departementNom: "Accueil" },
+];
+const idx2 = new Index(existants2);
+const connus = new Set(["direction", "accueil"]);
+assert.equal(etatDe(r2[0], idx2, connus).etat, "doublon"); // retrouvé malgré le 0 perdu
+assert.equal(etatDe(r2[1], idx2, connus).etat, "doublon"); // département inconnu : pas de fausse « mise à jour »
+console.log("import check (revue) OK");

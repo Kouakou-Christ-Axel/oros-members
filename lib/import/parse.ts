@@ -69,7 +69,7 @@ export function parseWorkbook(buf: ArrayBuffer) {
   const wb = XLSX.read(buf, { type: "array", cellDates: true });
   const feuille = wb.Sheets[wb.SheetNames[0]];
   if (!feuille) throw new Error("Fichier vide.");
-  const brut = XLSX.utils.sheet_to_json<unknown[]>(feuille, { header: 1, raw: true, blankrows: false });
+  const brut = XLSX.utils.sheet_to_json<unknown[]>(feuille, { header: 1, raw: true, blankrows: true });
   if (brut.length < 2) throw new Error("Aucune ligne de données.");
   if (brut.length - 1 > MAX_LIGNES) throw new Error(`Trop de lignes (maximum ${MAX_LIGNES}).`);
 
@@ -85,12 +85,17 @@ export function parseWorkbook(buf: ArrayBuffer) {
 
   const get = (r: unknown[], champ: string) => (col[champ] === undefined ? undefined : r[col[champ]]);
 
-  const rows: ImportRow[] = brut.slice(1).map((r, i) => {
+  // Numéro saisi en format Standard : Excel le lit comme un nombre et perd le 0 initial (10 chiffres en Côte d'Ivoire).
+  const telephone = (v: unknown) => (typeof v === "number" ? String(Math.trunc(v)).padStart(10, "0") : (txt(v) ?? ""));
+  const vide = (r: unknown[]) => r.every((c) => String(c ?? "").trim() === "");
+
+  const rows: ImportRow[] = brut.flatMap((r, i) => (i === 0 || vide(r) ? [] : [ligne(r, i + 1)]));
+  function ligne(r: unknown[], numero: number): ImportRow {
     const nom = txt(get(r, "nom")) ?? txt(get(r, "nomComplet")) ?? "";
-    const tel = txt(get(r, "telephone")) ?? "";
+    const tel = telephone(get(r, "telephone"));
     const st = norm(get(r, "st"));
     const row: ImportRow = {
-      ligne: i + 2,
+      ligne: numero,
       nom,
       prenoms: txt(get(r, "prenoms")),
       genre: parseGenre(get(r, "genre")),
@@ -106,7 +111,7 @@ export function parseWorkbook(buf: ArrayBuffer) {
     if (!nom) row.erreur = "Nom manquant";
     else if (chiffres(tel).length < 8) row.erreur = "Numéro incomplet";
     return row;
-  });
+  }
 
   return { rows, colonnes: Object.keys(col).map((c) => (c === "nomComplet" ? "nom" : c)) };
 }

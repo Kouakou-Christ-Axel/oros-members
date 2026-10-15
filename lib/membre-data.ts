@@ -11,8 +11,8 @@ const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 export function toPrisma(v: MembreFormValues) {
   return {
     nom: v.nom,
-    prenoms: v.prenoms,
-    genre: v.genre,
+    prenoms: nul(v.prenoms),
+    genre: nul(v.genre),
     dateNaissance: date(v.dateNaissance),
     lieuNaissance: nul(v.lieuNaissance),
     situationMatrimoniale: nul(v.situationMatrimoniale),
@@ -27,6 +27,8 @@ export function toPrisma(v: MembreFormValues) {
     st: v.st,
     pk: v.pk === "" ? null : v.pk,
     dateBapteme: v.baptise ? date(v.dateBapteme) : null,
+    ecoleNouveauxConvertis: date(v.ecoleNouveauxConvertis),
+    dernierePresence: date(v.dernierePresence),
     lieuBapteme: v.baptise ? nul(v.lieuBapteme) : null,
     celebrePar: v.baptise ? nul(v.celebrePar) : null,
     departementId: nul(v.departementId),
@@ -39,11 +41,20 @@ export function toPrisma(v: MembreFormValues) {
   } satisfies Prisma.MembreUncheckedUpdateInput;
 }
 
-/** Prochain code OM-AAAA-NNNN : suffixe = max existant + 1 (suppressions incluses). */
-export async function nextCode(tx: Pick<typeof db, "membre">, year: number) {
+/** Plus grand suffixe NNNN des codes OM-AAAA-NNNN (fiches supprimées incluses). */
+export async function maxSuffixe(tx: Pick<typeof db, "membre">) {
   const codes = await tx.membre.findMany({ select: { code: true } });
-  const max = codes.reduce((m, { code }) => Math.max(m, Number(code.split("-")[2]) || 0), 0);
-  return `OM-${year}-${String(max + 1).padStart(4, "0")}`;
+  return codes.reduce((m, { code }) => Math.max(m, Number(code.split("-")[2]) || 0), 0);
+}
+
+export const formatCode = (year: number, n: number) => `OM-${year}-${String(n).padStart(4, "0")}`;
+
+export async function nextCode(tx: Pick<typeof db, "membre">, year: number) {
+  return formatCode(year, (await maxSuffixe(tx)) + 1);
+}
+
+export async function departementExiste(id: string | null) {
+  return !id || (await db.departement.count({ where: { id } })) > 0;
 }
 
 export async function getFormValues(id: string): Promise<MembreFormValues | null> {
@@ -53,7 +64,7 @@ export async function getFormValues(id: string): Promise<MembreFormValues | null
     ...MEMBRE_DEFAULTS,
     nom: m.nom,
     prenoms: m.prenoms ?? "",
-    genre: m.genre === "M" ? "M" : "F",
+    genre: m.genre === "M" ? "M" : m.genre === "F" ? "F" : "",
     dateNaissance: iso(m.dateNaissance),
     lieuNaissance: m.lieuNaissance ?? "",
     situationMatrimoniale: m.situationMatrimoniale ?? "",
@@ -68,6 +79,8 @@ export async function getFormValues(id: string): Promise<MembreFormValues | null
     st: m.st,
     pk: m.pk ?? "",
     baptise: !!m.dateBapteme,
+    ecoleNouveauxConvertis: iso(m.ecoleNouveauxConvertis),
+    dernierePresence: iso(m.dernierePresence),
     dateBapteme: iso(m.dateBapteme),
     lieuBapteme: m.lieuBapteme ?? "",
     celebrePar: m.celebrePar ?? "",

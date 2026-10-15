@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth/dal";
 import { membreSchema, type MembreFormValues } from "@/lib/validations/membre";
-import { toPrisma } from "@/lib/membre-data";
+import { departementExiste, toPrisma } from "@/lib/membre-data";
 import { LABEL_PK, LABEL_ST } from "@/lib/membre-labels";
 import type { ActionResult } from "@/lib/actions/membres/create";
 
@@ -17,6 +17,7 @@ export async function modifierMembre(id: string, values: MembreFormValues): Prom
   if (!parsed.success) return { error: "Formulaire invalide." };
 
   const data = toPrisma(parsed.data);
+  if (!(await departementExiste(data.departementId))) return { error: "Département introuvable." };
   const ok = await db.$transaction(async (tx) => {
     const avant = await tx.membre.findFirst({ where: { id, deletedAt: null }, include: { departement: true } });
     if (!avant) return false;

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { parseWorkbook, norm, type ImportRow } from "@/lib/import/parse";
 import { LABEL_ST } from "@/lib/membre-labels";
+import { formatCode, maxSuffixe } from "@/lib/membre-data";
 import { Index, champsModifies, etatDe, type Etat, type Existant } from "@/lib/import/match";
 
 export type Strategie = "update" | "skip" | "dup";
@@ -31,14 +32,15 @@ async function charger() {
 
 export async function apercu(buf: ArrayBuffer) {
   const { rows, colonnes } = parseWorkbook(buf);
-  const { existants } = await charger();
+  const { existants, departements } = await charger();
   const index = new Index(existants);
+  const connus = new Set(departements.map((d) => norm(d.nom)));
   const lignes: LigneApercu[] = rows.map((r) => ({
     ligne: r.ligne,
     nom: [r.prenoms, r.nom].filter(Boolean).join(" "),
     telephone: r.telephone,
     departement: r.departement,
-    ...etatDe(r, index),
+    ...etatDe(r, index, connus),
   }));
   const compte = (e: Etat) => lignes.filter((l) => l.etat === e).length;
   return {
@@ -52,6 +54,7 @@ export async function apercu(buf: ArrayBuffer) {
 export interface Rapport { crees: number; maj: number; ignorees: number; erreurs: { ligne: number; motif: string }[] }
 
 const data = (r: ImportRow, depId: string | null) => ({
+  ...(r.telephone && { telephone: r.telephone }),
   ...(r.prenoms && { prenoms: r.prenoms }),
   ...(r.genre && { genre: r.genre }),
   ...(r.dateNaissance && { dateNaissance: r.dateNaissance }),
@@ -65,17 +68,17 @@ export async function importer(buf: ArrayBuffer, strategie: Strategie, user: { i
   const { rows } = parseWorkbook(buf);
   const { existants, departements } = await charger();
   const depId = (nom: string | null) => (nom ? departements.find((d) => norm(d.nom) === norm(nom))?.id ?? null : null);
+  const connus = new Set(departements.map((d) => norm(d.nom)));
   const rapport: Rapport = { crees: 0, maj: 0, ignorees: 0, erreurs: [] };
 
   await db.$transaction(async (tx) => {
     const index = new Index(existants);
-    const codes = await tx.membre.findMany({ select: { code: true } });
-    let seq = codes.reduce((m, { code }) => Math.max(m, Number(code.split("-")[2]) || 0), 0);
+    let seq = await maxSuffixe(tx);
 
     for (const r of rows) {
       if (r.erreur) { rapport.erreurs.push({ ligne: r.ligne, motif: r.erreur }); continue; }
       const trouve = index.find(r);
-      const modifs = trouve ? champsModifies(r, trouve) : [];
+      const modifs = trouve ? champsModifies(r, trouve, connus) : [];
 
       if (trouve && strategie !== "dup") {
         if (strategie === "skip" || modifs.length === 0) { rapport.ignorees++; continue; }
@@ -97,7 +100,7 @@ export async function importer(buf: ArrayBuffer, strategie: Strategie, user: { i
           ...data(r, depId(r.departement)),
           nom: r.nom,
           telephone: r.telephone,
-          code: `OM-${arrivee.getUTCFullYear()}-${String(++seq).padStart(4, "0")}`,
+          code: formatCode(arrivee.getUTCFullYear(), ++seq),
           dateArrivee: arrivee,
           dernierePresence: arrivee,
         },
