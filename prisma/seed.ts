@@ -70,6 +70,17 @@ async function main() {
       });
     }
   }
+  // Responsables de départements (maquette)
+  const RESPONSABLES: [string, string][] = [
+    ["Louange", "OM-2023-0740"], ["Intercession", "OM-2019-0042"], ["Accueil & Protocole", "OM-2021-0673"],
+    ["Enfants", "OM-2020-0231"], ["Jeunesse", "OM-2025-0812"], ["Média & Sonorisation", "OM-2020-0176"],
+    ["Évangélisation", "OM-2019-0128"], ["Diaconat", "OM-2021-0290"], ["Sécurité", "OM-2025-0644"],
+    ["Finances", "OM-2024-0902"], ["Direction", "OM-2018-0009"],
+  ];
+  for (const [nom, code] of RESPONSABLES) {
+    const m = await db.membre.findUnique({ where: { code } });
+    if (m) await db.departement.update({ where: { nom }, data: { responsableId: m.id } });
+  }
   console.log(`Seed OK : ${DEPARTEMENTS.length} départements, ${MEMBRES.length} membres`);
 }
 

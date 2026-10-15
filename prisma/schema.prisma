@@ -100,6 +100,8 @@ model Departement {
   icon     String   @default("briefcase-business")
   capacite Int      @default(0)
   membres  Membre[]
+  responsableId String?
+  responsable   Membre? @relation("ResponsableDepartement", fields: [responsableId], references: [id])
 
   @@map("departement")
 }
@@ -140,6 +142,7 @@ model Membre {
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   historique             HistoriqueMembre[]
+  departementsResponsable Departement[] @relation("ResponsableDepartement")
 
   @@index([st])
   @@index([deletedAt])
