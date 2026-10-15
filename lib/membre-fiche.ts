@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { nomComplet } from "@/lib/nom";
 import type { Assiduite, Parcours } from "@/generated/prisma/client";
 
 /* Données de la fiche individuelle, déjà formatées pour l'affichage :
@@ -67,7 +68,7 @@ export async function getFiche(id: string): Promise<Fiche | null> {
   return {
     id: m.id,
     code: m.code,
-    nom: m.nom,
+    nom: nomComplet(m.nom, m.prenoms),
     genre: m.genre,
     st: m.st,
     pk: m.pk,

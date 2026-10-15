@@ -108,6 +108,7 @@ model Membre {
   id                     String             @id @default(cuid())
   code                   String             @unique
   nom                    String
+  prenoms                String?
   genre                  String
   dateNaissance          DateTime?
   telephone              String
@@ -120,6 +121,12 @@ model Membre {
   personneAPrevenir      String?
   fonction               String?
   eglisePrecedente       String?
+  lieuNaissance          String?
+  lieuBapteme            String?
+  celebrePar             String?
+  employeur              String?
+  niveauEtudes           String?
+  notesPastorales        String?
   quartier               String?
   st                     Assiduite          @default(nouveau)
   pk                     Parcours?

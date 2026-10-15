@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Assiduite, Parcours, Prisma } from "@/generated/prisma/client";
 
 import type { ScopeId } from "@/lib/membres-scopes";
+import { nomComplet } from "@/lib/nom";
 
 const ASSIDUITES: string[] = ["nouveau", "regulier", "irregulier", "deserteur", "actif"];
 
@@ -14,7 +15,7 @@ function where(q: string, scope: ScopeId): Prisma.MembreWhereInput {
   }
   if (q) {
     const c = { contains: q, mode: "insensitive" as const };
-    w.OR = [{ nom: c }, { code: c }, { telephone: c }, { departement: { nom: c } }];
+    w.OR = [{ nom: c }, { prenoms: c }, { code: c }, { telephone: c }, { departement: { nom: c } }];
   }
   return w;
 }
@@ -42,7 +43,7 @@ export async function listMembres(q: string, scope: ScopeId): Promise<MembreRow[
   return rows.map((m) => ({
     id: m.id,
     code: m.code,
-    nom: m.nom,
+    nom: nomComplet(m.nom, m.prenoms),
     st: m.st,
     pk: m.pk,
     departement: m.departement?.nom ?? null,
