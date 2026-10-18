@@ -24,6 +24,7 @@ export async function marquerPresent(id: string): Promise<{ ok: true; deja: bool
   if (!resultat) return { error: "Fiche introuvable." };
 
   revalidatePath("/membres");
+  revalidatePath("/dashboard");
   revalidatePath(`/membres/${id}`);
   return { ok: true, deja: resultat.deja };
 }

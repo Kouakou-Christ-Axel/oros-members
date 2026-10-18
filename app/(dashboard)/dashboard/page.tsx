@@ -50,9 +50,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <DashboardFilters departements={d.nomsDepartements} />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(206px,1fr))", gap: 16 }}>
-        <StatCard label="Membres" value={d.stats.total} icon="users-round" accent="brand" />
-        <StatCard label={`Nouveaux · ${libelle.toLowerCase()}`} value={d.kpi.nouveaux} icon="user-round-plus" accent="flame" />
-        <StatCard label="Départements" value={d.departements.length} icon="briefcase-business" accent="success" footnote={`${d.stats.serviteurs} serviteurs affectés`} />
+        <Link href="/membres" className="oros-stat-link"><StatCard label="Membres" value={d.stats.total} icon="users-round" accent="brand" /></Link>
+        <Link href="/membres?scope=nouveau" className="oros-stat-link"><StatCard label={`Nouveaux · ${libelle.toLowerCase()}`} value={d.kpi.nouveaux} icon="user-round-plus" accent="flame" /></Link>
+        <Link href="/departements" className="oros-stat-link"><StatCard label="Départements" value={d.departements.length} icon="briefcase-business" accent="success" footnote={`${d.affectes} serviteurs affectés`} /></Link>
         <StatCard label="Fiches mises à jour" value={d.kpi.maj} icon="clock" accent="info" footnote={libelle.toLowerCase()} />
       </div>
 
@@ -65,7 +65,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
       <FunnelCard stats={d.stats} />
       <div className="oros-no-print"><RecentsCard lignes={d.recents} /></div>
-      <div className="oros-no-print"><EffectifCard departements={d.departements} serviteurs={d.stats.serviteurs} /></div>
+      <div className="oros-no-print"><EffectifCard departements={d.departements} serviteurs={d.affectes} /></div>
     </Page>
   );
 }

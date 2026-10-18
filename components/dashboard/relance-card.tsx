@@ -5,6 +5,7 @@ import { Empty } from "@/components/ui/empty";
 import { Icon } from "@/components/ui/icon";
 import { MemberIdentity } from "@/components/oros/member-identity";
 import { StatusBadge } from "@/components/oros/status-badge";
+import { PresenceButton } from "@/components/membres/presence-button";
 import type { Ligne } from "@/lib/dashboard";
 
 const MONO = { fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted-foreground)", fontVariantNumeric: "tabular-nums" } as const;
@@ -36,7 +37,8 @@ export function RelanceCard({ lignes, deserteurs, irreguliers, filtre }: { ligne
               <TableHead>Assiduité</TableHead>
               <TableHead>Département</TableHead>
               <TableHead>Dernière présence</TableHead>
-              <TableHead style={{ paddingRight: 20 }}>Téléphone</TableHead>
+              <TableHead>Téléphone</TableHead>
+              <TableHead className="oros-no-print" style={{ paddingRight: 20, textAlign: "right" }}>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -48,7 +50,13 @@ export function RelanceCard({ lignes, deserteurs, irreguliers, filtre }: { ligne
                 <TableCell><StatusBadge status={m.st} /></TableCell>
                 <TableCell>{m.departement ?? <span style={{ color: "var(--text-disabled)" }}>Non affecté</span>}</TableCell>
                 <TableCell style={MONO}>{m.date} · {m.jours} j</TableCell>
-                <TableCell style={{ ...MONO, color: "var(--warm-600)", paddingRight: 20 }}>{m.telephone}</TableCell>
+                <TableCell style={{ ...MONO, color: "var(--warm-600)" }}>
+                  <a href={`tel:${m.telephone.replace(/[^+\d]/g, "")}`} className="oros-no-print">{m.telephone}</a>
+                  <span className="oros-print-only">{m.telephone}</span>
+                </TableCell>
+                <TableCell className="oros-no-print" style={{ paddingRight: 20, textAlign: "right" }}>
+                  <PresenceButton id={m.id} presentAujourdhui={m.presentAujourdhui} size="sm" />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

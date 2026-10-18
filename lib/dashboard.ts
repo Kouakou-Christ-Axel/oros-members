@@ -12,7 +12,7 @@ const parDept = (dept: string) =>
 
 export interface Ligne {
   id: string; code: string; nom: string; st: "nouveau" | "regulier" | "irregulier" | "deserteur" | "actif";
-  departement: string | null; telephone: string; date: string; jours: number; complet: boolean;
+  departement: string | null; telephone: string; date: string; jours: number; complet: boolean; presentAujourdhui: boolean;
 }
 
 function ligne(m: {
@@ -21,32 +21,36 @@ function ligne(m: {
   departement: { nom: string } | null;
 }, ref: "presence" | "arrivee", now: Date): Ligne {
   const d = ref === "presence" ? m.dernierePresence : m.dateArrivee;
+  const aujourdhui = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   return {
     id: m.id, code: m.code, nom: nomComplet(m.nom, m.prenoms), st: m.st, telephone: m.telephone,
     departement: m.departement?.nom ?? null, date: d ? fr.format(d) : "—",
     jours: d ? Math.round((now.getTime() - d.getTime()) / DAY) : 0,
     complet: !!(m.dateBapteme && m.departementId),
+    presentAujourdhui: !!m.dernierePresence && m.dernierePresence.getTime() >= aujourdhui,
   };
 }
 
 export async function getDashboard(periode: Periode, dept: string, now: Date) {
   const inRange = { gte: periode.from, lt: periode.to };
   const include = { departement: { select: { nom: true } } };
+  // Le filtre département s'applique à tous les chiffres ; seul « Effectif par département » reste global.
+  const base = { ...actif, ...parDept(dept) };
 
   const [total, parSt, parPk, baptises, ecole, sansBapteme, nouveaux, maj, arrivees, relance, recents, naissances, departements, serviteursParDept] =
     await Promise.all([
-      db.membre.count({ where: actif }),
-      db.membre.groupBy({ by: ["st"], where: actif, _count: true }),
-      db.membre.groupBy({ by: ["pk"], where: { ...actif, pk: { not: null } }, _count: true }),
-      db.membre.count({ where: { ...actif, dateBapteme: { not: null } } }),
-      db.membre.count({ where: { ...actif, ecoleNouveauxConvertis: { not: null } } }),
-      db.membre.count({ where: { ...actif, dateBapteme: null } }),
-      db.membre.count({ where: { ...actif, dateArrivee: inRange } }),
-      db.membre.count({ where: { ...actif, updatedAt: inRange } }),
-      db.membre.findMany({ where: { ...actif, dateArrivee: { gte: periode.buckets[0]?.from ?? periode.from, lt: periode.to } }, select: { dateArrivee: true } }),
-      db.membre.findMany({ where: { ...actif, st: { in: ["irregulier", "deserteur"] }, ...parDept(dept) }, include, orderBy: { dernierePresence: "asc" } }),
-      db.membre.findMany({ where: { ...actif, st: "nouveau", ...parDept(dept) }, include, orderBy: { dateArrivee: "desc" }, take: 5 }),
-      db.membre.findMany({ where: { ...actif, dateNaissance: { not: null } }, select: { id: true, code: true, nom: true, prenoms: true, dateNaissance: true, departement: { select: { nom: true } } } }),
+      db.membre.count({ where: base }),
+      db.membre.groupBy({ by: ["st"], where: base, _count: true }),
+      db.membre.groupBy({ by: ["pk"], where: { ...base, pk: { not: null } }, _count: true }),
+      db.membre.count({ where: { ...base, dateBapteme: { not: null } } }),
+      db.membre.count({ where: { ...base, ecoleNouveauxConvertis: { not: null } } }),
+      db.membre.count({ where: { ...base, dateBapteme: null } }),
+      db.membre.count({ where: { ...base, dateArrivee: inRange } }),
+      db.membre.count({ where: { ...base, updatedAt: inRange } }),
+      db.membre.findMany({ where: { ...base, dateArrivee: { gte: periode.buckets[0]?.from ?? periode.from, lt: periode.to } }, select: { dateArrivee: true } }),
+      db.membre.findMany({ where: { ...base, st: { in: ["irregulier", "deserteur"] } }, include, orderBy: { dernierePresence: "asc" } }),
+      db.membre.findMany({ where: { ...base, st: "nouveau" }, include, orderBy: { dateArrivee: "desc" }, take: 5 }),
+      db.membre.findMany({ where: { ...base, dateNaissance: { not: null } }, select: { id: true, code: true, nom: true, prenoms: true, dateNaissance: true, departement: { select: { nom: true } } } }),
       db.departement.findMany({ orderBy: { nom: "asc" } }),
       db.membre.groupBy({ by: ["departementId"], where: { ...actif, pk: { not: null }, departementId: { not: null } }, _count: true }),
     ]);
@@ -77,6 +81,11 @@ export async function getDashboard(periode: Periode, dept: string, now: Date) {
     baptises, ecole, sansBapteme,
   };
 
+  const departementsAvecEffectif = departements.map((d) => ({
+    id: d.id, nom: d.nom, capacite: d.capacite,
+    serviteurs: serviteursParDept.find((r) => r.departementId === d.id)?._count ?? 0,
+  }));
+
   return {
     stats,
     kpi: { nouveaux, maj },
@@ -88,10 +97,9 @@ export async function getDashboard(periode: Periode, dept: string, now: Date) {
     recents: recents.map((m) => ligne(m, "arrivee", now)),
     nomsDepartements: departements.map((d) => d.nom),
     totalSerie: serie.reduce((s, b) => s + b.value, 0),
-    departements: departements.map((d) => ({
-      id: d.id, nom: d.nom, capacite: d.capacite,
-      serviteurs: serviteursParDept.find((r) => r.departementId === d.id)?._count ?? 0,
-    })),
+    departements: departementsAvecEffectif,
+    // Total cohérent avec les jauges par département (tout membre ayant un parcours et un département).
+    affectes: departementsAvecEffectif.reduce((n, d) => n + d.serviteurs, 0),
   };
 }
 

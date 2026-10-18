@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { marquerPresent } from "@/lib/actions/membres/presence";
 
-export function PresenceButton({ id, presentAujourdhui }: { id: string; presentAujourdhui: boolean }) {
+export function PresenceButton({ id, presentAujourdhui, size = "default" }: { id: string; presentAujourdhui: boolean; size?: "default" | "sm" }) {
   const [pending, start] = useTransition();
   const [fait, setFait] = useState(presentAujourdhui);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -13,6 +13,7 @@ export function PresenceButton({ id, presentAujourdhui }: { id: string; presentA
   return (
     <Button
       variant="outline"
+      size={size}
       disabled={pending || fait}
       title={erreur ?? undefined}
       onClick={() => start(async () => {
@@ -22,7 +23,7 @@ export function PresenceButton({ id, presentAujourdhui }: { id: string; presentA
         else setFait(true);
       })}
     >
-      <Icon name={fait ? "circle-check" : "check"} size={16} />
+      <Icon name={fait ? "circle-check" : "check"} size={size === "sm" ? 14 : 16} />
       {fait ? "Présent aujourd'hui" : erreur ? "Réessayer" : "Marquer présent"}
     </Button>
   );
