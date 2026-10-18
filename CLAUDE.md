@@ -183,6 +183,6 @@ Ces noms d'agents viennent de la configuration Claude Code locale, pas du repo �
 1. Avant de coder une fonctionnalité Next.js dont tu n'es pas sûr à 100 % (routing, cache, auth, forms...), lire le guide correspondant dans `node_modules/next/dist/docs/01-app/` — cette version (16.3.4) a des changements par rapport à ce que tu connais (`proxy.ts`, Cache Components, etc.), voir AGENTS.md.
 2. Toute nouvelle mutation (Server Action) revérifie la session et le rôle — ne jamais supposer que l'UI a déjà filtré.
 3. Toute nouvelle table Prisma qui touche à des données personnelles (téléphone, adresse, photo) : vérifier si elle doit apparaître dans le "Journal des actions" et si un champ doit être exclu des exports par défaut.
-4. `Cahier de Charges - SGMO.pdf` est actuellement non trackée par git (`??`) — décision de l'utilisateur à prendre : la committer (documentation du projet) ou la garder locale. Ne pas la committer sans demander.
+4. `Cahier de Charges - SGMO.pdf` reste **local, non committé** (décision de l'utilisateur) : exclu via `.git/info/exclude`, ne pas l'ajouter au dépôt.
 5. Avant de committer, suivre la section "Revue de code" ci-dessus.
 6. `.agents/skills/`, `.windsurf/skills/`, `.claude/skills/prisma-*`, `skills-lock.json` : docs Prisma auto-installées par `prisma init` (markdown seul, pas de code exécuté) pour que d'autres outils IA sur ce repo aient la doc à jour. Laissés en l'état, pas générés par nous.
