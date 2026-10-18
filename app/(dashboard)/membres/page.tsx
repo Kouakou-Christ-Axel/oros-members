@@ -27,9 +27,6 @@ export default async function MembresPage({ searchParams }: PageProps<"/membres"
         subtitle={`${counts.tous} fiches`}
         actions={
           <>
-            <Link href="/import" data-slot="button" data-variant="outline" data-size="default">
-              <Icon name="upload" size={16} />Importer
-            </Link>
             <ExportButton type="membres" />
             <Link href="/membres/nouveau" data-slot="button" data-variant="default" data-size="default">
               <Icon name="user-round-plus" size={16} />Nouveau membre

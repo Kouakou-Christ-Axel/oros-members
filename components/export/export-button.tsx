@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { telecharger } from "@/lib/telecharger";
 
 /* Téléchargement via /api/export/[type] (Route Handler, fichier binaire). */
-export function ExportButton({ type, label = "Exporter" }: { type: "membres" | "serviteurs" | "departements" | "modele"; label?: string }) {
+export function ExportButton({ type, label = "Exporter" }: { type: "membres" | "serviteurs" | "departements"; label?: string }) {
   const [open, setOpen] = useState(false);
   const go = (format: "xlsx" | "csv") => {
     setOpen(false);

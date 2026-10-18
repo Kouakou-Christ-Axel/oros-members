@@ -17,7 +17,7 @@ const DROITS = (pasteur: boolean) => [
   { ok: pasteur, texte: pasteur ? "Supprimer une fiche" : "Supprimer une fiche — réservé au Pasteur" },
   { ok: pasteur, texte: pasteur ? "Gérer la liste des départements" : "Gérer la liste des départements — réservé au Pasteur" },
   { ok: true, texte: "Changer l'assiduité et le parcours d'un membre" },
-  { ok: true, texte: "Importer et exporter les données" },
+  { ok: true, texte: "Exporter les données" },
   { ok: true, texte: "Lire les notes pastorales" },
 ];
 

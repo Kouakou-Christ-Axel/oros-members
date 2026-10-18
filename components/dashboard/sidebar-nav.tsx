@@ -5,8 +5,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroup,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import type { IconName } from "@/components/ui/icon";
 
@@ -21,11 +19,6 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/membres", label: "Membres", icon: "users-round" },
   { href: "/serviteurs", label: "Serviteurs", icon: "hand-heart" },
   { href: "/departements", label: "Départements", icon: "briefcase-business" },
-];
-
-const ADMIN_NAV: NavItem[] = [
-  { href: "/import", label: "Import Excel", icon: "file-spreadsheet" },
-  { href: "/statistiques", label: "Statistiques", icon: "chart-column" },
 ];
 
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
@@ -55,10 +48,6 @@ export function SidebarNav() {
   return (
     <>
       <NavItems items={PRIMARY_NAV} pathname={pathname} />
-      <SidebarGroup>
-        <SidebarGroupLabel>Administration</SidebarGroupLabel>
-        <NavItems items={ADMIN_NAV} pathname={pathname} />
-      </SidebarGroup>
     </>
   );
 }

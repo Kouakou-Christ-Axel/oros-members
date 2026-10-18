@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
 import { buildTable, EXPORT_TYPES, toCsv, toXlsx, type ExportType } from "@/lib/export";
 
-/* GET /api/export/{membres|serviteurs|departements|modele}?format=xlsx|csv
+/* GET /api/export/{membres|serviteurs|departements}?format=xlsx|csv
    Route Handler (fichier binaire, pas une Server Action) — session vérifiée ici. */
 export async function GET(request: Request, { params }: RouteContext<"/api/export/[type]">) {
   const session = await getSession();
@@ -16,9 +16,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/expor
   const csv = new URL(request.url).searchParams.get("format") === "csv";
   const nom = `oros-${type}-${new Date().toISOString().slice(0, 10)}`;
 
-  if (type !== "modele") {
-    await db.journalAction.create({ data: { userId: session.user.id, action: `export:${type}`, cible: `${table.lignes.length} lignes` } });
-  }
+  await db.journalAction.create({ data: { userId: session.user.id, action: `export:${type}`, cible: `${table.lignes.length} lignes` } });
 
   const body = csv ? toCsv(table) : new Uint8Array(toXlsx(table));
   return new Response(body, {

@@ -5,8 +5,8 @@ import { nomComplet } from "@/lib/nom";
 
 /* Exports fichiers. Les notes pastorales ne sortent JAMAIS dans un export
    (CLAUDE.md > Procédure de travail, point 3). */
-export type ExportType = "membres" | "serviteurs" | "departements" | "modele";
-export const EXPORT_TYPES: ExportType[] = ["membres", "serviteurs", "departements", "modele"];
+export type ExportType = "membres" | "serviteurs" | "departements";
+export const EXPORT_TYPES: ExportType[] = ["membres", "serviteurs", "departements"];
 
 type Cell = string | number;
 export interface Table { feuille: string; entetes: string[]; lignes: Cell[][] }
@@ -53,12 +53,6 @@ export async function buildTable(type: ExportType): Promise<Table> {
     case "membres": return membres(false);
     case "serviteurs": return membres(true);
     case "departements": return departements();
-    case "modele":
-      return {
-        feuille: "Modèle",
-        entetes: ["Nom et prénoms", "Sexe", "Date de naissance", "Téléphone", "Quartier", "Date d'arrivée", "Statut", "Département"],
-        lignes: [["Kouassi Aïcha", "F", "12/09/2001", "+225 07 12 45 88 03", "Cocody Angré", "03/02/2023", "Nouveau", "Louange"]],
-      };
   }
 }
 

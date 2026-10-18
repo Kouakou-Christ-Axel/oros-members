@@ -7,8 +7,8 @@ Cahier des charges complet : `Cahier de Charges - SGMO.pdf` (racine du repo).
 
 ## Utilisateurs (2 comptes fixes, pas d'inscription publique)
 
-- **Pasteur** : accès total (créer, modifier, supprimer, imprimer, import Excel, export PDF, statistiques).
-- **Assistante** : accès presque complet (créer, modifier, imprimer, import Excel) — **suppression définitive réservée au Pasteur** (pas de workflow d'approbation, voir Règles métier clés).
+- **Pasteur** : accès total (créer, modifier, supprimer, imprimer, exporter).
+- **Assistante** : accès presque complet (créer, modifier, imprimer, exporter) — **suppression définitive réservée au Pasteur** (pas de workflow d'approbation, voir Règles métier clés).
 
 ## Deux axes distincts (ne pas fusionner en un seul enum)
 
@@ -24,7 +24,6 @@ Chaque changement d'assiduité, de parcours, ou de département doit être ajout
 
 ## Règles métier clés
 
-- **Dédoublonnage import Excel** : un membre existe déjà si téléphone identique, OU email identique, OU (nom + prénom + date de naissance) identiques → mise à jour automatique au lieu de création d'un doublon.
 - **Départements** : liste modifiable par le Pasteur. Le design ajoute une notion de **capacité** par département (effectif cible vs serviteurs affectés, affiché en `Meter`) — pas dans le cahier des charges, à garder puisque le design l'utilise partout (dashboard, écran Départements).
 - **Fiche individuelle imprimable** : le design fait ça avec une feuille de style d'impression (`PrintSheet` + `base/print.css` + `window.print()`), **pas** un PDF généré côté serveur. Voir Packages pour la nuance avec l'export PDF de listes.
 - Tout supprime/modifie doit passer par le **journal des actions**.
@@ -50,7 +49,6 @@ app/
     parametrage/                # paramètres généraux, gestion des 2 comptes
   api/
     export/[type]/route.ts      # GET — export Excel/PDF/CSV (fichier binaire, pas un Server Action)
-    import/route.ts              # POST — upload + parsing Excel
 proxy.ts                        # anciennement "middleware.ts" — check cookie optimiste, voir Conventions
 lib/
   db.ts                         # client Prisma (singleton + PrismaPg adapter)
@@ -59,7 +57,7 @@ lib/
     client.ts                   # createAuthClient — hooks côté client (formulaire de connexion...)
     dal.ts                      # getSession()/requireSession()/requireRole() — cache() React, la vraie barrière
     permissions.ts              # access control : rôles pasteur/assistante
-  actions/                      # Server Actions par domaine : membres.ts, serviteurs.ts, departements.ts, import-export.ts
+  actions/                      # Server Actions par domaine : membres.ts, serviteurs.ts, departements.ts
   validations/                  # schémas zod par domaine
 prisma/
   schema.prisma                 # + modèles Better Auth (User/Session/Account/Verification, générés)
@@ -75,7 +73,7 @@ Une Server Action par mutation, colocalisée dans `lib/actions/<domaine>.ts` (`'
 - **Limite indicative : ~150-200 lignes par fichier** (hors imports/types). Un composant qui grossit au-delà doit être scindé — c'est un signal qu'il mélange plusieurs responsabilités, pas juste "trop de JSX".
 - Un composant = une responsabilité. Pas de `MembrePage` monolithique qui fait le fetch, la logique métier, le formulaire *et* le tableau : séparer en Server Component (fetch + orchestration) + composants enfants dédiés à l'affichage (`MembreTable`, `MembreCard`, `MembreForm`) + Server Action pour la mutation.
 - Tous les composants vivent dans `@/components/<domaine>/` (ex. `components/membres/membre-card.tsx`, `components/auth/login-form.tsx`) — y compris ceux spécifiques à une seule route. Pas de dossier privé `_components/` colocalisé dans les segments `app/`.
-- Un fichier `lib/actions/<domaine>.ts` par domaine (§Architecture). S'il dépasse ~200 lignes, scinder par sous-opération plutôt que garder un fichier fourre-tout : `lib/actions/membres/create.ts`, `update.ts`, `delete.ts`, `import.ts`.
+- Un fichier `lib/actions/<domaine>.ts` par domaine (§Architecture). S'il dépasse ~200 lignes, scinder par sous-opération plutôt que garder un fichier fourre-tout : `lib/actions/membres/create.ts`, `update.ts`, `delete.ts`.
 - Extraire toute logique métier (calcul de statut, dédoublonnage, formatage) hors des composants et des Server Actions vers `lib/<domaine>.ts` — les composants ne font que de l'orchestration/affichage, les Server Actions ne font que valider + appeler `lib/` + revalider.
 
 ## Conventions Next.js (spécifiques à cette version, next 16.3.4 — voir `node_modules/next/dist/docs/`)
@@ -94,7 +92,7 @@ Une Server Action par mutation, colocalisée dans `lib/actions/<domaine>.ts` (`'
 | ORM / BDD | `prisma` + `@prisma/client` **v7 (pas la v8 RC)** + `@prisma/adapter-pg` + `pg`, PostgreSQL | Recommandé par le cahier des charges. Prisma 7 impose un driver adapter (`prisma.config.ts`, generator `provider = "prisma-client"` avec `output` explicite) — voir §Authentification pour le détail |
 | Authentification | `better-auth` + `@better-auth/prisma-adapter` | Décision explicite de l'utilisateur (remplace le couple jose/bcryptjs prévu initialement). Voir §Authentification |
 | Validation | `zod` + `@hookform/resolvers` (`zodResolver`) | Schémas de formulaire branchés sur `react-hook-form` via `resolver: zodResolver(schema)` — voir ligne Formulaires |
-| Import Excel (.xlsx **et** .xls) | SheetJS, installé **depuis leur CDN** (`https://cdn.sheetjs.com`), pas `xlsx` sur npm | Le paquet `xlsx` publié sur npm est figé à une vieille version (0.18.5) avec des CVE connues — SheetJS distribue les versions à jour hors npm depuis leur propre registre. Vérifier l'URL de tarball actuelle sur sheetjs.com au moment de l'installer. `exceljs` ne lit pas le `.xls` legacy (BIFF), donc à écarter si le `.xls` doit vraiment être supporté |
+| Export Excel (.xlsx) | SheetJS, installé **depuis leur CDN** (`https://cdn.sheetjs.com`), pas `xlsx` sur npm | Le paquet `xlsx` publié sur npm est figé à une vieille version (0.18.5) avec des CVE connues — SheetJS distribue les versions à jour hors npm. Utilisé uniquement pour écrire les exports (l'import Excel a été retiré du périmètre) |
 | Fiche individuelle imprimable | Aucun paquet — feuille de style d'impression (`@media print`) + `window.print()` | C'est ce que fait le design (`PrintSheet`) ; le navigateur sait déjà générer un PDF depuis une page imprimable ("Enregistrer en PDF" dans la boîte d'impression), pas besoin de générer le PDF côté serveur pour ça |
 | Export PDF de listes (§15, si un vrai besoin serveur apparaît) | `@react-pdf/renderer` (à confirmer) | Seulement si l'export en masse (liste de fiches, pas une fiche seule) doit produire un PDF côté serveur sans passer par le navigateur — **vérifier la compatibilité React 19.2 à l'installation** ; repli sur `pdf-lib` si le peer range bloque |
 | Export CSV | aucun paquet — construction de la chaîne CSV à la main | Format trivial, le stdlib suffit (règle YAGNI) |
@@ -104,7 +102,7 @@ Une Server Action par mutation, colocalisée dans `lib/actions/<domaine>.ts` (`'
 | UI | `shadcn/ui` (new-york, déjà sur Tailwind v4) | Voir section shadcn/ui ci-dessous — le design system est explicitement construit dessus |
 | Formulaires | `react-hook-form` (+ `zod` pour les schémas de validation) | Décision explicite de l'utilisateur (remplace le choix initial `<form>` natif + `useActionState`) |
 | État de recherche/filtre dans l'URL | `nuqs` | Recherche avancée (§13) et filtres de liste (statut, département, niveau...) doivent être partageables/bookmarkables — `nuqs` donne des hooks typés au-dessus de `searchParams` sans réinventer le parsing à la main |
-| Cache client + états async pour les flux interactifs uniquement | `@tanstack/react-query` | **Pas** utilisé pour les pages CRUD classiques (Server Components suffisent) — réservé à l'import Excel (aperçu multi-étapes sur un Route Handler) et au rafraîchissement périodique des compteurs du tableau de bord. Voir la note dans Conventions Next.js sur son usage avec les Server Actions |
+| Cache client + états async pour les flux interactifs uniquement | `@tanstack/react-query` | **Pas** utilisé pour les pages CRUD classiques (Server Components suffisent) — réservé au rafraîchissement périodique des compteurs du tableau de bord. Voir la note dans Conventions Next.js sur son usage avec les Server Actions |
 
 ## Source du design (maquette Claude Design)
 
@@ -144,10 +142,9 @@ Deux projets Claude Design, lus via l'outil `DesignSync` (méthodes `list_files`
 - **TanStack Table = v9** (`useTable` + `tableFeatures`), seule version compatible React Compiler. Ne pas rétrograder en v8 ni ajouter d'`eslint-disable`.
 - **Fichiers `"use server"`** : n'exporter que des fonctions `async` déclarées (`export async function`), jamais de `const x = () => …` (le build échoue, le typecheck ne le voit pas). Toujours lancer `npm run build` avant de conclure une série d'écrans.
 - **Mutations métier** : `lib/actions/membres/{create,update,delete}.ts`, `lib/actions/departements.ts`. Création/modification de fiche ouverte aux deux rôles ; suppression de fiche et gestion des départements = `requireRole("pasteur")`. Chaque changement d'assiduité/parcours/département ajoute une ligne à `HistoriqueMembre` ; chaque mutation écrit dans `JournalAction`.
-- **Import Excel** : `lib/import/{parse,match,run}.ts` + Route Handler `app/api/import/route.ts` (aperçu puis import, même fichier renvoyé). Colonnes reconnues automatiquement par intitulé (pas d'écran de correspondance manuelle). Auto-vérification : `npx tsx lib/import/check.ts`. `@tanstack/react-query` n'est **pas** installé : `fetch` + `useState` suffisent pour ce flux.
-- **Export** : `app/api/export/[type]` (membres, serviteurs, departements, modele ; xlsx ou csv). Les notes pastorales ne sont jamais exportées.
+- **Export** : `app/api/export/[type]` (membres, serviteurs, departements ; xlsx ou csv). Les notes pastorales ne sont jamais exportées.
 - **Règle « Régulier après 3 mois »** : `lib/regles.ts`, déclenchée par `after()` à l'ouverture du tableau de bord (idempotente, entrée d'historique « Système »). À déplacer dans une tâche planifiée si besoin.
-- **Non livré (hors maquette ou hors périmètre)** : Statistiques et Paramètres (« écran non maquetté »), photo du membre (upload), changement de statut/affectation en masse, transfert de département, sauvegarde BDD (infra), création des comptes (CLI Better Auth, voir §Authentification).
+- **Non livré (hors maquette ou hors périmètre)** : **Retirés du périmètre à la demande de l'utilisateur : import Excel et écran Statistiques** (pages, API, `lib/import` supprimés ; ne pas les recréer sans nouvelle demande). Paramètres (« écran non maquetté »), photo du membre (upload), changement de statut/affectation en masse, transfert de département, sauvegarde BDD (infra), création des comptes (CLI Better Auth, voir §Authentification).
 - **Environnement local** : `BETTER_AUTH_URL` = `http://localhost:3000` ; si `next dev` démarre sur un autre port, la connexion est refusée (origine invalide). Libérer le port 3000 avant `npm run dev`.
 
 ## Sécurité (§18 du cahier des charges)
