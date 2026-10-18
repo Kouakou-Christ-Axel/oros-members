@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { Label } from "./label";
 
 /* Field — label + control + hint/error, the row unit of the member form.
@@ -35,10 +35,12 @@ export interface FieldGridProps extends ComponentProps<"div"> {
   gap?: number;
 }
 
-export function FieldGrid({ cols = 2, gap = 16, style, ...rest }: FieldGridProps) {
+/* Colonnes pilotées par --cols dans globals.css : elles passent à une seule colonne sur téléphone. */
+export function FieldGrid({ cols = 2, gap = 16, style, className, ...rest }: FieldGridProps) {
   return (
     <div
-      style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap, ...style }}
+      className={["oros-field-grid", className].filter(Boolean).join(" ")}
+      style={{ "--cols": cols, gap, ...style } as CSSProperties}
       {...rest}
     />
   );

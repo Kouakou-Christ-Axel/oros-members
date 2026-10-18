@@ -695,5 +695,8 @@ hr{border:0;border-top:var(--border-w) solid var(--border-subtle);margin:var(--s
 @media(max-width:1100px){.oros-dash-split{grid-template-columns:minmax(0,1fr)!important}.oros-profil-split{grid-template-columns:minmax(0,1fr)!important}.oros-form-split{grid-template-columns:minmax(0,1fr)!important}.oros-funnel{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px}.oros-funnel-step:nth-child(4){border-left:0;padding-left:0}}
 .oros-strength [data-slot="progress-indicator"]{background:var(--strength)!important}
 .oros-strength [data-slot="progress"]{background:color-mix(in oklab,var(--strength) 18%,transparent)!important}
-@media(max-width:720px){.oros-funnel{grid-template-columns:repeat(2,minmax(0,1fr))}.oros-funnel-step:nth-child(odd){border-left:0;padding-left:0}}
+@media(max-width:1100px){.oros-fiche-split{grid-template-columns:minmax(0,1fr)!important}.oros-fiche-id{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.oros-fiche-id>:first-child{grid-column:1/-1}}
+.oros-field-grid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr))}
+@media(max-width:640px){.oros-field-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:720px){[data-slot="tabs-list"][data-variant="line"]{overflow-x:auto;overflow-y:hidden;scrollbar-width:none}[data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"]{flex:none}[data-slot="tabs-list"][data-variant="line"] [data-slot="tabs-trigger"][data-state="active"]::after{bottom:0}.oros-fiche-id{grid-template-columns:minmax(0,1fr)!important}.oros-funnel{grid-template-columns:repeat(2,minmax(0,1fr))}.oros-funnel-step:nth-child(odd){border-left:0;padding-left:0}}
 @media print{[data-slot="page"]{padding:0!important;gap:14px!important}[data-slot="card"]{box-shadow:none!important}[data-slot="stat-card"]{padding:10px 12px!important}.oros-funnel{grid-template-columns:repeat(6,minmax(0,1fr))}}

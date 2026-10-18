@@ -9,7 +9,7 @@ export function ficheTimeline(f: Fiche): TimelineEntry[] {
 
 export function FicheParcours({ fiche }: { fiche: Fiche }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr)", gap: 16, alignItems: "start" }} className="oros-fiche-split">
       <Card>
         <CardHeader className="border-b">
           <CardTitle>Progression spirituelle</CardTitle>

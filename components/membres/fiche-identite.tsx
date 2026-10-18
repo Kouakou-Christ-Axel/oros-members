@@ -6,7 +6,7 @@ import type { Fiche } from "@/lib/membre-fiche";
 
 export function FicheIdentite({ fiche }: { fiche: Fiche }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "200px minmax(0,1fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "200px minmax(0,1fr) minmax(0,1fr)", gap: 16, alignItems: "start" }} className="oros-fiche-id">
       <Card>
         <CardContent style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
           <MemberPhoto width={148} height={188} hint="Aucune photo" />

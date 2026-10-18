@@ -31,7 +31,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <Sidebar>
         <SidebarHeader>
           <SidebarBrand
-            logo={<Image src="/logo-oros-white.png" alt="" width={28} height={28} style={{ height: 28, width: "auto" }} />}
+            logo={<Image src="/logo-oros-white.png" alt="" width={42} height={28} style={{ height: 28, width: "auto" }} />}
           />
         </SidebarHeader>
         <SidebarContent>

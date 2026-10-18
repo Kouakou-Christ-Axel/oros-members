@@ -86,7 +86,7 @@ export function PasswordForm() {
             <Switch checked={voir} onChange={setVoir} />Afficher les mots de passe saisis
           </label>
         </CardContent>
-        <CardFooter className="border-t" style={{ gap: 8 }}>
+        <CardFooter className="border-t" style={{ gap: 8, flexWrap: "wrap" }}>
           <Button type="submit" disabled={isSubmitting}><Icon name="check" size={16} />Enregistrer le nouveau mot de passe</Button>
           <Button type="button" variant="ghost" onClick={() => { reset(); setOk(false); setErreur(null); }}>Annuler</Button>
         </CardFooter>
