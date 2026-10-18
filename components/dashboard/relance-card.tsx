@@ -51,8 +51,9 @@ export function RelanceCard({ lignes, deserteurs, irreguliers, filtre }: { ligne
                 <TableCell>{m.departement ?? <span style={{ color: "var(--text-disabled)" }}>Non affecté</span>}</TableCell>
                 <TableCell style={MONO}>{m.date} · {m.jours} j</TableCell>
                 <TableCell style={{ ...MONO, color: "var(--warm-600)" }}>
-                  <a href={`tel:${m.telephone.replace(/[^+\d]/g, "")}`} className="oros-no-print">{m.telephone}</a>
-                  <span className="oros-print-only">{m.telephone}</span>
+                  {/\d/.test(m.telephone)
+                    ? <a href={`tel:${m.telephone.replace(/[^+\d]/g, "")}`}>{m.telephone}</a>
+                    : m.telephone}
                 </TableCell>
                 <TableCell className="oros-no-print" style={{ paddingRight: 20, textAlign: "right" }}>
                   <PresenceButton id={m.id} presentAujourdhui={m.presentAujourdhui} size="sm" />

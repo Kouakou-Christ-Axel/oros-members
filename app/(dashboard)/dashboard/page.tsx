@@ -32,6 +32,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const d = await getDashboard(periode, dept, now);
   const libelle = PERIODES.find((p) => p.id === id)!.label;
+  // La liste des membres n'a pas de filtre département : un lien sous filtre mènerait à d'autres chiffres.
+  const lien = (href: string, carte: React.ReactNode) =>
+    dept === "" ? <Link href={href} className="oros-stat-link">{carte}</Link> : carte;
 
   return (
     <Page>
@@ -50,8 +53,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <DashboardFilters departements={d.nomsDepartements} />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(206px,1fr))", gap: 16 }}>
-        <Link href="/membres" className="oros-stat-link"><StatCard label="Membres" value={d.stats.total} icon="users-round" accent="brand" /></Link>
-        <Link href="/membres?scope=nouveau" className="oros-stat-link"><StatCard label={`Nouveaux · ${libelle.toLowerCase()}`} value={d.kpi.nouveaux} icon="user-round-plus" accent="flame" /></Link>
+        {lien("/membres", <StatCard label="Membres" value={d.stats.total} icon="users-round" accent="brand" />)}
+        {lien("/membres?scope=nouveau", <StatCard label={`Nouveaux · ${libelle.toLowerCase()}`} value={d.kpi.nouveaux} icon="user-round-plus" accent="flame" />)}
         <Link href="/departements" className="oros-stat-link"><StatCard label="Départements" value={d.departements.length} icon="briefcase-business" accent="success" footnote={`${d.affectes} serviteurs affectés`} /></Link>
         <StatCard label="Fiches mises à jour" value={d.kpi.maj} icon="clock" accent="info" footnote={libelle.toLowerCase()} />
       </div>
@@ -63,7 +66,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <AnniversairesCard items={d.anniversaires} now={now} />
       </div>
 
-      <FunnelCard stats={d.stats} />
+      <FunnelCard stats={d.stats} liens={dept === ""} />
       <div className="oros-no-print"><RecentsCard lignes={d.recents} /></div>
       <div className="oros-no-print"><EffectifCard departements={d.departements} serviteurs={d.affectes} /></div>
     </Page>

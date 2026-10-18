@@ -18,7 +18,7 @@ export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   // En développement seulement : `next dev` bascule sur un autre port quand le 3000 est pris,
   // l'origine ne correspond alors plus à BETTER_AUTH_URL et la connexion serait refusée.
-  trustedOrigins: process.env.NODE_ENV === "development" ? ["http://localhost:*"] : [],
+  trustedOrigins: process.env.NODE_ENV === "development" ? ["http://localhost:*", "http://127.0.0.1:*"] : [],
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,

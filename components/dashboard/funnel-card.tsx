@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import type { DashboardData } from "@/lib/dashboard";
 
 /* Entonnoir à 6 étapes : jalons datés comptés séparément (CLAUDE.md > Deux axes distincts). */
-export function FunnelCard({ stats }: { stats: DashboardData["stats"] }) {
+export function FunnelCard({ stats, liens }: { stats: DashboardData["stats"]; liens: boolean }) {
   const etapes: { icon: IconName; label: string; value: number; color: string; scope?: string }[] = [
     { icon: "user-round-plus", label: "Nouveau", value: stats.nouveaux, color: "var(--st-nouveau-dot)", scope: "nouveau" },
     { icon: "droplets", label: "Baptisé", value: stats.baptises, color: "var(--st-actif-dot)" },
@@ -34,7 +34,7 @@ export function FunnelCard({ stats }: { stats: DashboardData["stats"] }) {
                 <span className="oros-funnel-sub">{pct(e.value)} % de l&apos;assemblée</span>
               </>
             );
-            return e.scope
+            return e.scope && liens
               ? <Link key={e.label} href={`/membres?scope=${e.scope}`} className="oros-funnel-step">{contenu}</Link>
               : <div key={e.label} className="oros-funnel-step">{contenu}</div>;
           })}
