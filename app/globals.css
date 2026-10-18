@@ -195,7 +195,7 @@
   --sp-0:0px; --sp-05:2px; --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
   --sp-5:20px; --sp-6:24px; --sp-7:28px; --sp-8:32px; --sp-10:40px; --sp-12:48px; --sp-16:64px; --sp-20:80px;
 
-  --sidebar-w:248px; --sidebar-w-collapsed:64px; --topbar-h:60px; --content-max:1440px;
+  --sidebar-w:232px; --sidebar-w-collapsed:64px; --topbar-h:60px; --content-max:1440px;
   --row-h:48px; --row-h-comfy:56px; --control-h-sm:30px; --control-h:36px; --control-h-lg:42px; --tap-min:44px;
 }
 
@@ -587,6 +587,12 @@ hr{border:0;border-top:var(--border-w) solid var(--border-subtle);margin:var(--s
   [data-slot="sidebar"][data-state="collapsed"] [data-slot="sidebar-menu-button-count"]{display:none}
   [data-slot="sidebar"][data-state="collapsed"] [data-slot="sidebar-header"],
   [data-slot="sidebar"][data-state="collapsed"] [data-slot="sidebar-menu-button"]{justify-content:center;padding:0}
+}
+/* Tablette (721–1100px) : la sidebar passe en rail d'icônes pour laisser la place au contenu. */
+@media (min-width:721px) and (max-width:1100px){
+  [data-slot="sidebar"]{width:var(--sidebar-w-collapsed)}
+  [data-slot="sidebar-brand"],[data-slot="sidebar-menu-button-label"],[data-slot="sidebar-group-label"],[data-slot="sidebar-menu-button-count"]{display:none}
+  [data-slot="sidebar-header"],[data-slot="sidebar-menu-button"]{justify-content:center;padding:0}
 }
 [data-slot="topbar"]{display:flex;align-items:center;gap:12px;height:var(--topbar-h);padding:0 24px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
 [data-slot="page"]{padding:24px;display:flex;flex-direction:column;gap:20px;max-width:var(--content-max)}
